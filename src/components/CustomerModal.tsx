@@ -13,12 +13,16 @@ import {
   Percent,
   Phone,
   AlertTriangle,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
 } from 'lucide-react';
 import { CustomerProfile, VatMode } from '../types';
 import {
   saveOrUpdateCustomerProfile,
   deleteCustomerProfile,
   getVatModeLabel,
+  saveAllCustomerProfiles,
 } from '../utils/customerDb';
 
 interface CustomerModalProps {
@@ -43,6 +47,10 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  // Drag & drop reordering state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   // Form fields
   const [alias, setAlias] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -63,6 +71,41 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
       (c.phone && c.phone.includes(searchTerm)) ||
       c.taxId.includes(searchTerm)
   );
+
+  // Reordering logic: works seamlessly in both full and filtered views
+  const handleMoveRow = (fromFilteredIdx: number, toFilteredIdx: number) => {
+    if (fromFilteredIdx === toFilteredIdx) return;
+    const sourceCust = filteredCustomers[fromFilteredIdx];
+    const targetCust = filteredCustomers[toFilteredIdx];
+    if (!sourceCust || !targetCust) return;
+
+    const fullSourceIdx = customers.findIndex((c) => c.id === sourceCust.id);
+    if (fullSourceIdx === -1) return;
+
+    const updated = [...customers];
+    const [moved] = updated.splice(fullSourceIdx, 1);
+
+    const newTargetIdx = updated.findIndex((c) => c.id === targetCust.id);
+    if (newTargetIdx === -1) {
+      updated.push(moved);
+    } else {
+      const insertIdx = toFilteredIdx > fromFilteredIdx ? newTargetIdx + 1 : newTargetIdx;
+      updated.splice(insertIdx, 0, moved);
+    }
+
+    saveAllCustomerProfiles(updated);
+    onCustomersUpdated(updated);
+  };
+
+  const handleMoveUp = (filteredIndex: number) => {
+    if (filteredIndex <= 0) return;
+    handleMoveRow(filteredIndex, filteredIndex - 1);
+  };
+
+  const handleMoveDown = (filteredIndex: number) => {
+    if (filteredIndex >= filteredCustomers.length - 1) return;
+    handleMoveRow(filteredIndex, filteredIndex + 1);
+  };
 
   const resetForm = () => {
     setEditingId(null);
@@ -139,7 +182,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden my-6">
+      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden my-6">
         {/* Modal Header */}
         <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -182,6 +225,23 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                 <Plus className="w-4 h-4" />
                 <span>เพิ่มลูกค้าใหม่ในฐานข้อมูล</span>
               </button>
+            </div>
+          )}
+
+          {/* Drag & Reorder Instruction Banner */}
+          {!isAddingNew && !editingId && customers.length > 1 && (
+            <div className="flex items-center justify-between text-[11px] text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3 py-1.5 rounded-lg">
+              <div className="flex items-center gap-1.5">
+                <GripVertical className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                <span>
+                  <strong>การจัดเรียงลำดับ:</strong> กดเมาส์ซ้ายค้างที่ไอคอน ⠿ แล้วลากขึ้น-ลง หรือกดปุ่มลูกศร ▲ ▼ เพื่อสลับลำดับลูกค้า
+                </span>
+              </div>
+              {searchTerm && (
+                <span className="text-[10px] text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full font-medium">
+                  ผลการค้นหา {filteredCustomers.length} จาก {customers.length}
+                </span>
+              )}
             </div>
           )}
 
@@ -355,6 +415,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-100/80 text-slate-700 sticky top-0 font-semibold border-b border-slate-200">
                 <tr>
+                  <th className="py-2 px-2 text-center w-28 whitespace-nowrap">ลำดับ / สลับที่</th>
                   <th className="py-2 px-3">ชื่อเรียก (ดัชนี)</th>
                   <th className="py-2 px-3">ชื่อบริษัท & ที่อยู่</th>
                   <th className="py-2 px-3">เลขประจำตัวผู้เสียภาษี</th>
@@ -365,20 +426,104 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
               <tbody className="divide-y divide-slate-200">
                 {filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400">
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
                       ไม่พบข้อมูลลูกค้า (กดปุ่ม "เพิ่มลูกค้าใหม่" ด้านบนเพื่อบันทึก)
                     </td>
                   </tr>
                 ) : (
-                  filteredCustomers.map((cust) => {
+                  filteredCustomers.map((cust, index) => {
                     const isSelected = cust.id === activeCustomerId;
+                    const isDragging = draggedIndex === index;
+                    const isDragOver = dragOverIndex === index && draggedIndex !== index;
+
                     return (
                       <tr
                         key={cust.id}
-                        className={`hover:bg-orange-50/40 transition-colors ${
-                          isSelected ? 'bg-orange-50/70 font-medium' : ''
+                        draggable={!editingId && !isAddingNew}
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', String(index));
+                          setDraggedIndex(index);
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                          if (dragOverIndex !== index) {
+                            setDragOverIndex(index);
+                          }
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (draggedIndex !== null && draggedIndex !== index) {
+                            handleMoveRow(draggedIndex, index);
+                          }
+                          setDraggedIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        className={`transition-colors select-none ${
+                          isDragging
+                            ? 'opacity-40 bg-orange-100/70 border-2 border-dashed border-orange-400'
+                            : isDragOver
+                            ? 'bg-orange-100/80 ring-2 ring-orange-500 ring-inset'
+                            : isSelected
+                            ? 'bg-orange-50/70 font-medium hover:bg-orange-50'
+                            : 'hover:bg-orange-50/40'
                         }`}
                       >
+                        {/* 1. Reorder Column: Drag Handle, Up/Down Buttons, Sequence No */}
+                        <td className="py-2.5 px-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Drag handle (click & hold left mouse button) */}
+                            <div
+                              className="cursor-grab active:cursor-grabbing p-1 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                              title="กดเมาส์ซ้ายค้างไว้แล้วเลื่อนขึ้น-ลงเพื่อสลับลำดับ"
+                            >
+                              <GripVertical className="w-4 h-4" />
+                            </div>
+
+                            {/* Arrow Up / Down buttons */}
+                            <div className="flex flex-col">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveUp(index);
+                                }}
+                                disabled={index === 0 || editingId !== null || isAddingNew}
+                                className="p-0.5 text-slate-400 hover:text-orange-600 hover:bg-orange-100 disabled:opacity-20 disabled:hover:bg-transparent rounded transition-colors cursor-pointer"
+                                title="กดเพื่อเลื่อนขึ้น 1 ลำดับ"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMoveDown(index);
+                                }}
+                                disabled={
+                                  index === filteredCustomers.length - 1 ||
+                                  editingId !== null ||
+                                  isAddingNew
+                                }
+                                className="p-0.5 text-slate-400 hover:text-orange-600 hover:bg-orange-100 disabled:opacity-20 disabled:hover:bg-transparent rounded transition-colors cursor-pointer"
+                                title="กดเพื่อเลื่อนลง 1 ลำดับ"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Sequential order label */}
+                            <span className="text-[11px] font-mono text-slate-500 font-semibold w-5 text-right">
+                              #{index + 1}
+                            </span>
+                          </div>
+                        </td>
+
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-orange-700 bg-orange-100/70 px-2 py-0.5 rounded">
@@ -396,7 +541,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                           <div className="font-semibold text-slate-900">{cust.companyName}</div>
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 mt-0.5">
                             {cust.contact && (
-                              <span>ติดต่อ: <strong className="text-slate-700">{cust.contact}</strong></span>
+                              <span>
+                                ติดต่อ: <strong className="text-slate-700">{cust.contact}</strong>
+                              </span>
                             )}
                             {cust.phone && (
                               <span className="flex items-center gap-0.5 text-slate-600">
@@ -405,15 +552,16 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                               </span>
                             )}
                           </div>
-                          <div className="text-[11px] text-slate-500 truncate max-w-xs mt-0.5" title={cust.address}>
+                          <div
+                            className="text-[11px] text-slate-500 truncate max-w-xs mt-0.5"
+                            title={cust.address}
+                          >
                             {cust.address}
                           </div>
                         </td>
 
                         <td className="py-2.5 px-3">
-                          <div className="font-mono text-slate-700">
-                            {cust.taxId || '-'}
-                          </div>
+                          <div className="font-mono text-slate-700">{cust.taxId || '-'}</div>
                           <div className="text-[10px] text-slate-500">
                             สาขา: {cust.branch || 'สำนักงานใหญ่'}
                           </div>
@@ -436,7 +584,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                         <td className="py-2.5 px-3 text-center">
                           {confirmDeleteId === cust.id ? (
                             <div className="inline-flex items-center gap-1 bg-red-50 p-1 rounded border border-red-200 shadow-2xs">
-                              <span className="text-[10px] text-red-700 font-bold whitespace-nowrap">ลบ?</span>
+                              <span className="text-[10px] text-red-700 font-bold whitespace-nowrap">
+                                ลบ?
+                              </span>
                               <button
                                 type="button"
                                 onClick={() => handleDelete(cust.id)}

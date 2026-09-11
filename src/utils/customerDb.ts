@@ -112,3 +112,30 @@ export function deleteCustomerProfile(id: string): CustomerProfile[] {
   saveAllCustomerProfiles(filtered);
   return filtered;
 }
+
+export function reorderCustomerProfiles(fromIndex: number, toIndex: number): CustomerProfile[] {
+  const current = loadCustomerProfiles();
+  if (
+    fromIndex < 0 ||
+    fromIndex >= current.length ||
+    toIndex < 0 ||
+    toIndex >= current.length ||
+    fromIndex === toIndex
+  ) {
+    return current;
+  }
+  const result = [...current];
+  const [movedItem] = result.splice(fromIndex, 1);
+  result.splice(toIndex, 0, movedItem);
+  saveAllCustomerProfiles(result);
+  return result;
+}
+
+export function moveCustomerProfile(id: string, direction: 'up' | 'down'): CustomerProfile[] {
+  const current = loadCustomerProfiles();
+  const index = current.findIndex((c) => c.id === id);
+  if (index === -1) return current;
+  const targetIndex = direction === 'up' ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= current.length) return current;
+  return reorderCustomerProfiles(index, targetIndex);
+}
