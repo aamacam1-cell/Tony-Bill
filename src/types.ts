@@ -76,6 +76,8 @@ export interface SavedInvoiceRecord {
   netTotal: number; // ยอดรวมสุทธิ
   vatMode: VatMode; // ประเภท VAT
   itemCount: number; // จำนวนรายการสินค้า
+  synced?: boolean; // สถานะการ sync ข้อมูลขึ้น Server (false = บันทึกใน IndexedDB รอ sync, true = sync สำเร็จแล้ว)
+  syncedAt?: string; // เวลา ISO ที่ sync สำเร็จ
   snapshot: {
     issuer: IssuerInfo;
     customer: CustomerInfo;
@@ -83,4 +85,13 @@ export interface SavedInvoiceRecord {
     items: InvoiceItem[];
     vatMode: VatMode;
   };
+}
+
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+
+export interface SyncApiResponse {
+  success: boolean;
+  message?: string;
+  syncedIds: string[];
+  serverTimestamp?: string;
 }

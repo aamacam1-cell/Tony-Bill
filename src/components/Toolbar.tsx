@@ -13,6 +13,8 @@ import {
   History,
   BookmarkCheck,
 } from 'lucide-react';
+import { SyncStatus } from '../types';
+import { NetworkStatusIndicator } from './NetworkStatusIndicator';
 
 interface ToolbarProps {
   onOpenIssuerModal: () => void;
@@ -27,6 +29,11 @@ interface ToolbarProps {
   isInvoiceSaved?: boolean;
   zoom: number;
   onZoomChange: (zoom: number) => void;
+  isOnline: boolean;
+  syncStatus: SyncStatus;
+  unsyncedCount: number;
+  onSyncNow: (simulateError?: boolean) => void;
+  syncError?: string | null;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -42,6 +49,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   isInvoiceSaved,
   zoom,
   onZoomChange,
+  isOnline,
+  syncStatus,
+  unsyncedCount,
+  onSyncNow,
+  syncError,
 }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [invoiceSaveSuccess, setInvoiceSaveSuccess] = useState(false);
@@ -61,9 +73,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <header className="no-print sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 shadow-xs">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Left: App Title & Document status */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold shadow-xs">
+        {/* Left: App Title & Document status & Network Status */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="w-9 h-9 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -75,6 +87,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               </span>
             </h1>
             <p className="text-xs text-slate-500">TAX INVOICE / RECEIPT GENERATOR (A4 PRINT READY)</p>
+          </div>
+
+          <div className="border-l border-slate-200 pl-2.5 ml-1">
+            <NetworkStatusIndicator
+              isOnline={isOnline}
+              syncStatus={syncStatus}
+              unsyncedCount={unsyncedCount}
+              onSyncNow={onSyncNow}
+              lastError={syncError}
+            />
           </div>
         </div>
 
