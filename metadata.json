@@ -1,0 +1,6 @@
+{
+  "name": "ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน",
+  "description": "เว็บแอปพลิเคชันสำหรับสร้างและพิมพ์ใบกำกับภาษี/ใบเสร็จรับเงิน (TAX INVOICE / RECEIPT) ขนาด A4 คำนวณ VAT 3 รูปแบบ แปลงตัวเลขเป็นบาทภาษาไทย พร้อมพิมพ์",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

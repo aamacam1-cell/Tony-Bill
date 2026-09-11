@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1e293b;
+    background-color: #f1f5f9;
+  }
+}
+
+/* Custom print media styles for A4 exact multi-page sizing */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    font-size: 12px !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Force print background colors and borders */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .a4-paper {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    transform: none !important;
+  }
+
+  /* Multi-page break: Sheet 1 breaks to Page 2 */
+  .a4-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    min-height: 275mm !important;
+    box-sizing: border-box !important;
+  }
+
+  .a4-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Make inputs look like standard printed text */
+  input, textarea, select {
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
+    color: #000000 !important;
+    resize: none !important;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: transparent !important;
+  }
+}
+
+/* Screen A4 sheet styling */
+.a4-paper {
+  width: 210mm;
+  min-height: 297mm;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #ffffff;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
+  padding: 10mm 12mm 10mm 12mm;
+  box-sizing: border-box;
+  position: relative;
+}
+
+@media screen and (max-width: 860px) {
+  .a4-paper {
+    width: 100%;
+    min-height: auto;
+    padding: 14px 10px;
+  }
+}
+
+/* 13-box styling for Thai Tax ID */
+.tax-id-box {
+  width: 18px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 13px;
+  background-color: #ffffff;
+}
