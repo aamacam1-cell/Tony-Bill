@@ -14,9 +14,6 @@ import {
   Receipt,
   RotateCcw,
   Layers,
-  CloudCheck,
-  CloudUpload,
-  RefreshCw,
 } from 'lucide-react';
 import { SavedInvoiceRecord } from '../types';
 import { formatDateTimeThai } from '../utils/historyDb';
@@ -31,9 +28,6 @@ interface HistoryModalProps {
   onRecordsUpdated: (records: SavedInvoiceRecord[]) => void;
   onLoadInvoice: (record: SavedInvoiceRecord) => void;
   activeInvoiceNo?: string;
-  isOnline?: boolean;
-  onSyncNow?: () => void;
-  isSyncing?: boolean;
 }
 
 export const HistoryModal: React.FC<HistoryModalProps> = ({
@@ -43,19 +37,11 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
   onRecordsUpdated,
   onLoadInvoice,
   activeInvoiceNo,
-  isOnline = true,
-  onSyncNow,
-  isSyncing = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-
-  // Count unsynced records
-  const unsyncedCount = useMemo(() => {
-    return records.filter((r) => r.synced !== true).length;
-  }, [records]);
 
   // Filter records
   const filteredRecords = useMemo(() => {
@@ -121,36 +107,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                 <span className="text-xs font-medium px-2 py-0.5 bg-slate-800 text-orange-300 rounded-full border border-slate-700">
                   {records.length} รายการ
                 </span>
-                {unsyncedCount > 0 && (
-                  <span className="text-xs font-medium px-2 py-0.5 bg-amber-900/60 text-amber-200 rounded-full border border-amber-600/40">
-                    รอซิงค์ {unsyncedCount}
-                  </span>
-                )}
               </h2>
               <p className="text-[11px] text-slate-400">
-                ข้อมูลถูกบันทึกใน IndexedDB บนเครื่อง รองรับการทำงานออฟไลน์ 100% พร้อมซิงค์ขึ้น Server อัตโนมัติ
+                ประวัติเอกสารใบกำกับภาษีที่บันทึกไว้ สามารถค้นหา โหลดกลับมาแก้ไข หรือพิมพ์ซ้ำได้
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {unsyncedCount > 0 && onSyncNow && (
-              <button
-                type="button"
-                onClick={onSyncNow}
-                disabled={isSyncing || !isOnline}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors shadow-xs cursor-pointer"
-                title="ซิงค์ข้อมูลทั้งหมดใน IndexedDB ขึ้นเซิร์ฟเวอร์"
-              >
-                {isSyncing ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <CloudUpload className="w-3.5 h-3.5" />
-                )}
-                <span>{isSyncing ? 'กำลังซิงค์...' : `ซิงค์ขึ้นเซิร์ฟเวอร์ (${unsyncedCount})`}</span>
-              </button>
-            )}
-
             {records.length > 0 && (
               <button
                 type="button"
@@ -287,28 +251,9 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
                           {/* Invoice Number */}
                           <td className="py-2.5 px-3">
                             <div className="flex flex-col gap-0.5">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-mono font-bold text-orange-700 bg-orange-100/70 border border-orange-200 px-1.5 py-0.5 rounded text-[11px] inline-block w-fit">
-                                  {rec.invoiceNo}
-                                </span>
-                                {rec.synced ? (
-                                  <span
-                                    className="inline-flex items-center gap-0.5 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1 py-0.2 rounded font-medium"
-                                    title={`ซิงค์ขึ้นเซิร์ฟเวอร์แล้วเมื่อ ${rec.syncedAt ? formatDateTimeThai(rec.syncedAt) : ''}`}
-                                  >
-                                    <Check className="w-2.5 h-2.5 text-emerald-600" />
-                                    <span>ซิงค์แล้ว</span>
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="inline-flex items-center gap-0.5 text-[10px] text-amber-800 bg-amber-50 border border-amber-300 px-1 py-0.2 rounded font-medium"
-                                    title="บันทึกใน IndexedDB แล้ว (รอซิงค์ขึ้น Server)"
-                                  >
-                                    <CloudUpload className="w-2.5 h-2.5 text-amber-600" />
-                                    <span>รอซิงค์</span>
-                                  </span>
-                                )}
-                              </div>
+                              <span className="font-mono font-bold text-orange-700 bg-orange-100/70 border border-orange-200 px-1.5 py-0.5 rounded text-[11px] inline-block w-fit">
+                                {rec.invoiceNo}
+                              </span>
                               <span className="text-[10px] text-slate-400 font-medium">
                                 {formatDateTimeThai(rec.savedAt)}
                               </span>

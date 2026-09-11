@@ -25,7 +25,6 @@ import {
 import { loadCustomerProfiles, saveOrUpdateCustomerProfile } from './utils/customerDb';
 import { loadInvoiceHistory } from './utils/historyDb';
 import { getAllInvoicesFromIndexedDB, saveInvoiceToIndexedDB } from './utils/indexedDb';
-import { useOfflineSync } from './hooks/useOfflineSync';
 import { executePrint } from './utils/printHelper';
 import { getTodayISODate, formatThaiDate } from './utils/dateFormatter';
 import { Toolbar } from './components/Toolbar';
@@ -86,18 +85,6 @@ export default function App() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [saveToast, setSaveToast] = useState<{ message: string; invoiceNo: string } | null>(null);
 
-  // Offline Sync Engine & Network detection hook
-  const {
-    isOnline,
-    syncStatus,
-    unsyncedCount,
-    syncNow,
-    refreshUnsyncedCount,
-    lastError: syncError,
-  } = useOfflineSync((updatedRecords) => {
-    setHistoryRecords(updatedRecords);
-  });
-
   // Load complete history from IndexedDB on startup
   useEffect(() => {
     getAllInvoicesFromIndexedDB().then((records) => {
@@ -150,7 +137,7 @@ export default function App() {
     executePrint();
   };
 
-  // Save invoice into local history (Always saves into IndexedDB first!)
+  // Save invoice into local history (IndexedDB / localStorage)
   const handleSaveInvoice = async (isSilent = false) => {
     const activeItemCount = items.filter(
       (it) => (it.description && it.description.trim()) || it.amount > 0
@@ -160,7 +147,6 @@ export default function App() {
     setLastSavedOrPrintedInvoiceNo(currentNo);
     setLastSavedOrPrintedNo(currentNo);
 
-    // Requirement 2: Save to IndexedDB first
     const { record, isNew, allRecords } = await saveInvoiceToIndexedDB({
       invoiceNo: currentNo,
       docDate: meta.docDate || getTodayISODate(),
@@ -171,7 +157,6 @@ export default function App() {
       netTotal: calcResult.netTotal,
       vatMode: vatMode,
       itemCount: activeItemCount || items.length,
-      synced: false, // Initial flag: waiting to sync to server
       snapshot: {
         issuer: { ...issuer },
         customer: { ...customer },
@@ -182,20 +167,14 @@ export default function App() {
     });
 
     setHistoryRecords(allRecords);
-    await refreshUnsyncedCount();
 
     if (!isSilent) {
       setSaveToast({
         message: isNew
-          ? 'บันทึกลง IndexedDB เรียบร้อยแล้ว (เก็บในเครื่องปลอดภัย)'
-          : 'อัปเดตข้อมูลใน IndexedDB เรียบร้อยแล้ว',
+          ? 'บันทึกข้อมูลใบกำกับภาษีเรียบร้อยแล้ว'
+          : 'อัปเดตข้อมูลใบกำกับภาษีเรียบร้อยแล้ว',
         invoiceNo: record.invoiceNo,
       });
-    }
-
-    // Requirement 4: If online, automatically sync to server in background
-    if (typeof navigator !== 'undefined' && navigator.onLine) {
-      syncNow();
     }
   };
 
@@ -399,11 +378,6 @@ export default function App() {
         isInvoiceSaved={historyRecords.some((r) => r.invoiceNo.trim() === meta.invoiceNo.trim())}
         zoom={zoom}
         onZoomChange={setZoom}
-        isOnline={isOnline}
-        syncStatus={syncStatus}
-        unsyncedCount={unsyncedCount}
-        onSyncNow={() => syncNow()}
-        syncError={syncError}
         onOpenInvoiceNoModal={() => setIsInvoiceNoModalOpen(true)}
         currentInvoiceNo={meta.invoiceNo}
       />
@@ -559,9 +533,6 @@ export default function App() {
         onRecordsUpdated={setHistoryRecords}
         onLoadInvoice={handleLoadInvoiceFromHistory}
         activeInvoiceNo={meta.invoiceNo}
-        isOnline={isOnline}
-        onSyncNow={() => syncNow()}
-        isSyncing={syncStatus === 'syncing'}
       />
 
       {/* Save Invoice Toast Banner */}

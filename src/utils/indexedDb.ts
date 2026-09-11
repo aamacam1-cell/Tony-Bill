@@ -82,11 +82,10 @@ export async function getAllInvoicesFromIndexedDB(): Promise<SavedInvoiceRecord[
 }
 
 /**
- * Save or update an invoice in IndexedDB (Always saved to IndexedDB first!)
- * Records are marked with `synced: false` to be synced to server when online.
+ * Save or update an invoice in IndexedDB
  */
 export async function saveInvoiceToIndexedDB(
-  payload: Omit<SavedInvoiceRecord, 'id' | 'savedAt'> & { id?: string; synced?: boolean }
+  payload: Omit<SavedInvoiceRecord, 'id' | 'savedAt'> & { id?: string }
 ): Promise<{ record: SavedInvoiceRecord; isNew: boolean; allRecords: SavedInvoiceRecord[] }> {
   const db = await getDB();
   const allCurrent = await db.getAll(STORE_NAME);
@@ -105,9 +104,6 @@ export async function saveInvoiceToIndexedDB(
       ...payload,
       id: existing.id,
       savedAt: now,
-      // If content was modified, mark synced as false so it syncs fresh version to server
-      synced: payload.synced !== undefined ? payload.synced : false,
-      syncedAt: existing.syncedAt,
     };
   } else {
     isNew = true;
@@ -115,7 +111,6 @@ export async function saveInvoiceToIndexedDB(
       ...payload,
       id: payload.id || `inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       savedAt: now,
-      synced: false, // New record waiting to sync
     };
   }
 
@@ -139,50 +134,6 @@ export async function saveInvoiceToIndexedDB(
       isNew,
       allRecords: updatedList,
     };
-  }
-}
-
-/**
- * Get all invoices that have NOT been synced to the server yet (synced: false)
- */
-export async function getUnsyncedInvoicesFromIndexedDB(): Promise<SavedInvoiceRecord[]> {
-  try {
-    const db = await getDB();
-    const all = await db.getAll(STORE_NAME);
-    return all.filter((inv) => inv.synced !== true);
-  } catch (err) {
-    console.error('[IndexedDB] Failed to query unsynced invoices:', err);
-    return [];
-  }
-}
-
-/**
- * Mark specific invoice IDs as synced: true with timestamp
- */
-export async function markInvoicesAsSyncedInIndexedDB(ids: string[]): Promise<void> {
-  if (!ids || ids.length === 0) return;
-  const db = await getDB();
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const now = new Date().toISOString();
-
-  for (const id of ids) {
-    const item = await tx.store.get(id);
-    if (item) {
-      item.synced = true;
-      item.syncedAt = now;
-      await tx.store.put(item);
-    }
-  }
-
-  await tx.done;
-
-  // Mirror to localStorage
-  try {
-    const all = await db.getAll(STORE_NAME);
-    const sorted = all.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
-    localStorage.setItem('tk_invoice_history_records_v1', JSON.stringify(sorted));
-  } catch (err) {
-    console.error('[IndexedDB] Error updating localStorage after sync:', err);
   }
 }
 

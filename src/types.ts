@@ -87,15 +87,6 @@ export interface SavedInvoiceRecord {
   };
 }
 
-export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
-
-export interface SyncApiResponse {
-  success: boolean;
-  message?: string;
-  syncedIds: string[];
-  serverTimestamp?: string;
-}
-
 export interface InvoiceNumberSettings {
   prefix: string; // e.g. "TK"
   autoBEYear: boolean; // if true, adds 2-digit Buddhist year e.g. "69 "
