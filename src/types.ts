@@ -95,3 +95,11 @@ export interface SyncApiResponse {
   syncedIds: string[];
   serverTimestamp?: string;
 }
+
+export interface InvoiceNumberSettings {
+  prefix: string; // e.g. "TK"
+  autoBEYear: boolean; // if true, adds 2-digit Buddhist year e.g. "69 "
+  startingNumber: number; // e.g. 21
+  paddingDigits: number; // e.g. 3 -> "021"
+  customTemplate?: string; // custom full invoice number e.g. "TK69 021"
+}

@@ -87,6 +87,118 @@ export const SAMPLE_ITEMS: InvoiceItem[] = [
 
 const LOCAL_STORAGE_ISSUER_KEY = 'tk_invoice_default_issuer_v1';
 const LOCAL_STORAGE_COUNTER_KEY = 'tk_invoice_counter_v1';
+export const LOCAL_STORAGE_INVOICE_SETTINGS_KEY = 'tk_invoice_number_settings_v1';
+export const LOCAL_STORAGE_LAST_SAVED_PRINTED_KEY = 'tk_invoice_last_saved_or_printed_v1';
+
+export interface InvoiceNumberSettings {
+  prefix: string; // e.g. "TK"
+  autoBEYear: boolean; // if true, adds 2-digit Buddhist year e.g. "69 "
+  startingNumber: number; // e.g. 21
+  paddingDigits: number; // e.g. 3 -> "021"
+  customTemplate?: string; // custom full invoice number e.g. "TK69 021"
+}
+
+export const DEFAULT_INVOICE_SETTINGS: InvoiceNumberSettings = {
+  prefix: 'TK',
+  autoBEYear: true,
+  startingNumber: 21,
+  paddingDigits: 3,
+  customTemplate: 'TK69 021',
+};
+
+export function loadInvoiceNumberSettings(): InvoiceNumberSettings {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_INVOICE_SETTINGS_KEY);
+    if (raw) {
+      return { ...DEFAULT_INVOICE_SETTINGS, ...JSON.parse(raw) };
+    }
+  } catch {
+    // fallback
+  }
+  return DEFAULT_INVOICE_SETTINGS;
+}
+
+export function saveInvoiceNumberSettings(settings: InvoiceNumberSettings): void {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_INVOICE_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.error('Failed to save invoice number settings to localStorage', err);
+  }
+}
+
+export function formatInvoiceNumberFromSettings(settings: InvoiceNumberSettings, seq?: number): string {
+  if (settings.customTemplate && settings.customTemplate.trim()) {
+    return settings.customTemplate.trim();
+  }
+  const sequence = seq ?? settings.startingNumber;
+  const seqStr = String(sequence).padStart(settings.paddingDigits, '0');
+  if (settings.autoBEYear) {
+    const beYear = getBEYear2Digit();
+    return `${settings.prefix}${beYear} ${seqStr}`;
+  }
+  return `${settings.prefix}${seqStr}`;
+}
+
+export function getDefaultInvoiceNumber(): string {
+  const settings = loadInvoiceNumberSettings();
+  return formatInvoiceNumberFromSettings(settings);
+}
+
+/**
+ * Increment invoice number by +1 regardless of custom format.
+ * Examples:
+ *   "TK69 021" -> "TK69 022"
+ *   "INV-2569/009" -> "INV-2569/010"
+ *   "A-001" -> "A-002"
+ */
+export function incrementInvoiceNumber(current: string): string {
+  if (!current || !current.trim()) {
+    return getDefaultInvoiceNumber();
+  }
+
+  const trimmed = current.trim();
+
+  // Match trailing sequence of digits
+  const match = trimmed.match(/^(.*?)(\d+)$/);
+  if (match) {
+    const prefix = match[1];
+    const digits = match[2];
+    const nextNum = parseInt(digits, 10) + 1;
+    // preserve padding length of the matched digits
+    const padded = String(nextNum).padStart(digits.length, '0');
+    return `${prefix}${padded}`;
+  }
+
+  // If ends with a space-separated number
+  const tokens = trimmed.split(' ');
+  const lastToken = tokens[tokens.length - 1];
+  if (/^\d+$/.test(lastToken)) {
+    const nextNum = parseInt(lastToken, 10) + 1;
+    tokens[tokens.length - 1] = String(nextNum).padStart(lastToken.length, '0');
+    return tokens.join(' ');
+  }
+
+  // Fallback
+  return `${trimmed} 001`;
+}
+
+export function getLastSavedOrPrintedInvoiceNo(): string | null {
+  try {
+    return localStorage.getItem(LOCAL_STORAGE_LAST_SAVED_PRINTED_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setLastSavedOrPrintedInvoiceNo(invoiceNo: string): void {
+  try {
+    if (invoiceNo && invoiceNo.trim()) {
+      localStorage.setItem(LOCAL_STORAGE_LAST_SAVED_PRINTED_KEY, invoiceNo.trim());
+    }
+  } catch {
+    // ignore
+  }
+}
 
 export function loadSavedIssuer(): IssuerInfo {
   try {

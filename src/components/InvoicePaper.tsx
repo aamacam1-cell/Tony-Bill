@@ -13,6 +13,8 @@ import {
   Tag,
   Store,
   Edit3,
+  Settings,
+  Hash,
 } from 'lucide-react';
 import {
   InvoiceItem,
@@ -43,6 +45,8 @@ interface InvoicePaperProps {
   onVatModeChange: (mode: VatMode) => void;
   calcResult: CalculationResult;
   onRegenerateInvoiceNo: () => void;
+  onIncrementInvoiceNo?: () => void;
+  onOpenInvoiceNoSettings?: () => void;
   customers: CustomerProfile[];
   onSelectCustomer: (customer: CustomerProfile) => void;
   onOpenCustomerModal: () => void;
@@ -64,6 +68,8 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
   onVatModeChange,
   calcResult,
   onRegenerateInvoiceNo,
+  onIncrementInvoiceNo,
+  onOpenInvoiceNoSettings,
   customers,
   onSelectCustomer,
   onOpenCustomerModal,
@@ -216,12 +222,32 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 />
                 <button
                   type="button"
-                  onClick={onRegenerateInvoiceNo}
-                  className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
-                  title="สร้างเลขที่ใบกำกับอัตโนมัติ"
+                  onClick={onIncrementInvoiceNo || onRegenerateInvoiceNo}
+                  className="no-print p-0.5 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                  title="เพิ่มเลขที่บิลถัดไป (+1)"
                 >
-                  <RefreshCw className="w-3 h-3" />
+                  <Plus className="w-3.5 h-3.5" />
                 </button>
+                {onOpenInvoiceNoSettings && (
+                  <button
+                    type="button"
+                    onClick={onOpenInvoiceNoSettings}
+                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    title="ตั้งค่าเลขที่เริ่มต้น"
+                  >
+                    <Settings className="w-3 h-3" />
+                  </button>
+                )}
+                {!onOpenInvoiceNoSettings && (
+                  <button
+                    type="button"
+                    onClick={onRegenerateInvoiceNo}
+                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    title="สร้างเลขที่ใบกำกับอัตโนมัติ"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             </div>
 

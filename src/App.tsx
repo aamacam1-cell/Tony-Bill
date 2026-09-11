@@ -17,6 +17,10 @@ import {
   saveIssuerAsDefault,
   getNextInvoiceNumber,
   calculateInvoice,
+  incrementInvoiceNumber,
+  getLastSavedOrPrintedInvoiceNo,
+  setLastSavedOrPrintedInvoiceNo,
+  getDefaultInvoiceNumber,
 } from './utils/invoiceDefaults';
 import { loadCustomerProfiles, saveOrUpdateCustomerProfile } from './utils/customerDb';
 import { loadInvoiceHistory } from './utils/historyDb';
@@ -29,21 +33,31 @@ import { InvoicePaper } from './components/InvoicePaper';
 import { CustomerModal } from './components/CustomerModal';
 import { IssuerModal } from './components/IssuerModal';
 import { HistoryModal } from './components/HistoryModal';
+import { InvoiceNoSettingsModal } from './components/InvoiceNoSettingsModal';
 import { FileText, Layers, CheckCircle2, Info, RotateCcw, Undo2, X, BookmarkCheck } from 'lucide-react';
 
 export default function App() {
   const [issuer, setIssuer] = useState<IssuerInfo>(() => loadSavedIssuer());
   const [customer, setCustomer] = useState<CustomerInfo>(INITIAL_CUSTOMER);
+  const [lastSavedOrPrintedNo, setLastSavedOrPrintedNo] = useState<string>(() => {
+    return getLastSavedOrPrintedInvoiceNo() || '';
+  });
+  const [isInvoiceNoModalOpen, setIsInvoiceNoModalOpen] = useState(false);
   const [meta, setMeta] = useState<InvoiceMeta>(() => {
+    const defaultNo = getDefaultInvoiceNumber();
+    const initial: InvoiceMeta = {
+      ...INITIAL_META,
+      invoiceNo: defaultNo || INITIAL_META.invoiceNo,
+    };
     try {
       const savedCashier = localStorage.getItem('tk_invoice_cashier_name');
       if (savedCashier !== null && savedCashier.trim() !== '') {
-        return { ...INITIAL_META, cashierName: savedCashier };
+        initial.cashierName = savedCashier;
       }
     } catch {
       // ignore
     }
-    return INITIAL_META;
+    return initial;
   });
   const [items, setItems] = useState<InvoiceItem[]>(SAMPLE_ITEMS);
   const [vatMode, setVatMode] = useState<VatMode>('ADD_VAT');
@@ -127,6 +141,10 @@ export default function App() {
 
   // Handle printing (both pages)
   const handlePrint = () => {
+    const currentNo = meta.invoiceNo || 'TK-UNNAMED';
+    setLastSavedOrPrintedInvoiceNo(currentNo);
+    setLastSavedOrPrintedNo(currentNo);
+
     // Automatically save/archive the invoice into history as evidence
     handleSaveInvoice(true);
     executePrint();
@@ -138,9 +156,13 @@ export default function App() {
       (it) => (it.description && it.description.trim()) || it.amount > 0
     ).length;
 
+    const currentNo = meta.invoiceNo || 'TK-UNNAMED';
+    setLastSavedOrPrintedInvoiceNo(currentNo);
+    setLastSavedOrPrintedNo(currentNo);
+
     // Requirement 2: Save to IndexedDB first
     const { record, isNew, allRecords } = await saveInvoiceToIndexedDB({
-      invoiceNo: meta.invoiceNo || 'TK-UNNAMED',
+      invoiceNo: currentNo,
       docDate: meta.docDate || getTodayISODate(),
       customerName: customer.name || 'ไม่ระบุชื่อลูกค้า',
       customerPhone: customer.phone,
@@ -179,6 +201,9 @@ export default function App() {
 
   // Load a saved invoice record back into the editor
   const handleLoadInvoiceFromHistory = (record: SavedInvoiceRecord) => {
+    setLastSavedOrPrintedInvoiceNo(record.invoiceNo);
+    setLastSavedOrPrintedNo(record.invoiceNo);
+
     if (record.snapshot) {
       setCustomer({ ...record.snapshot.customer });
       setMeta({ ...record.snapshot.meta });
@@ -273,17 +298,19 @@ export default function App() {
   const handleReset = () => {
     const todayISO = getTodayISODate();
     const todayThai = formatThaiDate(todayISO);
-    const newInvoiceNo = getNextInvoiceNumber();
+    // Requirement: ไม่เปลี่ยนเลขที่ใบกำกับภาษีเมื่อกดรีเซ็ต ให้คงเลขล่าสุดที่บันทึกหรือพิมพ์ไว้ (หรือเลขปัจจุบัน)
+    const keptInvoiceNo = lastSavedOrPrintedNo || meta.invoiceNo;
 
     // Store previous data in case user wants to undo
     setResetNotification({
-      invoiceNo: newInvoiceNo,
+      invoiceNo: keptInvoiceNo,
       prevCustomer: { ...customer },
       prevMeta: { ...meta },
       prevItems: [...items],
       prevVatMode: vatMode,
     });
 
+    // Requirement: ล้างข้อมูล เฉพาะ ข้อมูล "ลูกค้า / ผู้ซื้อ"
     setCustomer({
       name: '',
       contact: '',
@@ -294,19 +321,7 @@ export default function App() {
       deliveryDate: todayISO,
     });
 
-    // ชื่อของผู้รับเงิน ไม่ต้องเปลี่ยนแปลง ถึงแม้จะกด รีเซ็ต ก็ตาม จะเปลียนก็ต่อเมื่อผู้ใช้ พิมพ์แก้ไขเองเท่านั้น
-    setMeta((prevMeta) => ({
-      docType: 'ORIGINAL',
-      invoiceNo: newInvoiceNo,
-      poNo: '',
-      jobName: '',
-      docDate: todayISO,
-      receiverName: '',
-      receiverDate: todayThai,
-      cashierName: prevMeta.cashierName,
-      cashierDate: todayThai,
-    }));
-
+    // Requirement: และ รายการสินค้า เท่านั้น เพื่อรอการใส่ข้อมูล ใหม่
     setItems([
       {
         id: String(Date.now()),
@@ -316,6 +331,20 @@ export default function App() {
         amount: 0,
       },
     ]);
+
+    // คงเลขที่ใบกำกับล่าสุดที่บันทึกหรือพิมพ์ไว้ และคงชื่อผู้รับเงินไว้
+    setMeta((prevMeta) => ({
+      ...prevMeta,
+      docType: 'ORIGINAL',
+      invoiceNo: keptInvoiceNo,
+      poNo: '',
+      jobName: '',
+      docDate: todayISO,
+      receiverName: '',
+      receiverDate: todayThai,
+      cashierName: prevMeta.cashierName,
+      cashierDate: todayThai,
+    }));
   };
 
   const handleUndoReset = () => {
@@ -331,9 +360,27 @@ export default function App() {
     saveIssuerAsDefault(issuer);
   };
 
-  const handleRegenerateInvoiceNo = () => {
-    const nextNo = getNextInvoiceNumber();
+  // Increment invoice number when user explicitly clicks the button
+  const handleIncrementInvoiceNo = () => {
+    const nextNo = incrementInvoiceNumber(meta.invoiceNo);
     setMeta((prev) => ({ ...prev, invoiceNo: nextNo }));
+    setSaveToast({
+      message: `ปรับเลขที่ใบกำกับเป็น ${nextNo} เรียบร้อยแล้ว`,
+      invoiceNo: nextNo,
+    });
+  };
+
+  // Preserve existing function name for backwards compatibility
+  const handleRegenerateInvoiceNo = () => {
+    handleIncrementInvoiceNo();
+  };
+
+  const handleApplyInvoiceNo = (newNo: string) => {
+    setMeta((prev) => ({ ...prev, invoiceNo: newNo }));
+    setSaveToast({
+      message: `ปรับเลขที่ใบกำกับเป็น ${newNo} แล้ว`,
+      invoiceNo: newNo,
+    });
   };
 
   return (
@@ -357,6 +404,8 @@ export default function App() {
         unsyncedCount={unsyncedCount}
         onSyncNow={() => syncNow()}
         syncError={syncError}
+        onOpenInvoiceNoModal={() => setIsInvoiceNoModalOpen(true)}
+        currentInvoiceNo={meta.invoiceNo}
       />
 
       {/* Main Workspace / A4 Sheet View */}
@@ -416,6 +465,8 @@ export default function App() {
               onVatModeChange={setVatMode}
               calcResult={calcResult}
               onRegenerateInvoiceNo={handleRegenerateInvoiceNo}
+              onIncrementInvoiceNo={handleIncrementInvoiceNo}
+              onOpenInvoiceNoSettings={() => setIsInvoiceNoModalOpen(true)}
               customers={customers}
               onSelectCustomer={handleSelectCustomer}
               onOpenCustomerModal={() => setIsCustomerModalOpen(true)}
@@ -461,6 +512,8 @@ export default function App() {
               onVatModeChange={setVatMode}
               calcResult={calcResult}
               onRegenerateInvoiceNo={handleRegenerateInvoiceNo}
+              onIncrementInvoiceNo={handleIncrementInvoiceNo}
+              onOpenInvoiceNoSettings={() => setIsInvoiceNoModalOpen(true)}
               customers={customers}
               onSelectCustomer={handleSelectCustomer}
               onOpenCustomerModal={() => setIsCustomerModalOpen(true)}
@@ -470,6 +523,16 @@ export default function App() {
           </section>
         </div>
       </main>
+
+      {/* Invoice Number Settings Modal */}
+      <InvoiceNoSettingsModal
+        isOpen={isInvoiceNoModalOpen}
+        onClose={() => setIsInvoiceNoModalOpen(false)}
+        currentInvoiceNo={meta.invoiceNo}
+        lastSavedOrPrintedNo={lastSavedOrPrintedNo}
+        onApplyInvoiceNo={handleApplyInvoiceNo}
+        onIncrementInvoiceNo={handleIncrementInvoiceNo}
+      />
 
       {/* Customer Database Modal */}
       <CustomerModal
@@ -530,13 +593,13 @@ export default function App() {
       {resetNotification && (
         <aside
           id="reset-toast-banner"
-          aria-label="แจ้งเตือนการสร้างใบใหม่"
+          aria-label="แจ้งเตือนการรีเซ็ต"
           className="no-print fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs max-w-md"
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              สร้างใบกำกับภาษีใบใหม่เรียบร้อย{' '}
+              ล้างข้อมูลลูกค้าและรายการสินค้าเรียบร้อย{' '}
               <strong className="text-orange-400 font-mono">({resetNotification.invoiceNo})</strong>
             </span>
           </div>

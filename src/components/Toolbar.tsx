@@ -12,6 +12,7 @@ import {
   Store,
   History,
   BookmarkCheck,
+  Hash,
 } from 'lucide-react';
 import { SyncStatus } from '../types';
 import { NetworkStatusIndicator } from './NetworkStatusIndicator';
@@ -34,6 +35,8 @@ interface ToolbarProps {
   unsyncedCount: number;
   onSyncNow: (simulateError?: boolean) => void;
   syncError?: string | null;
+  onOpenInvoiceNoModal?: () => void;
+  currentInvoiceNo?: string;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -54,6 +57,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   unsyncedCount,
   onSyncNow,
   syncError,
+  onOpenInvoiceNoModal,
+  currentInvoiceNo,
 }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [invoiceSaveSuccess, setInvoiceSaveSuccess] = useState(false);
@@ -141,6 +146,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <span>แก้ไขข้อมูลร้าน</span>
           </button>
 
+          {/* Invoice Number Settings Button */}
+          {onOpenInvoiceNoModal && (
+            <button
+              type="button"
+              onClick={onOpenInvoiceNoModal}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-orange-50 hover:border-orange-400 hover:text-orange-700 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
+              title="ตั้งค่าเลขที่ใบกำกับภาษีเริ่มต้น และจัดการรูปแบบเลขที่"
+            >
+              <Hash className="w-3.5 h-3.5 text-orange-600" />
+              <span>ตั้งค่าเลขที่</span>
+              {currentInvoiceNo && (
+                <span className="hidden sm:inline-block text-[10px] bg-orange-100 text-orange-800 font-mono px-1.5 py-0.2 rounded font-bold">
+                  {currentInvoiceNo}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Zoom controls for desktop preview */}
           <div className="hidden lg:inline-flex items-center gap-1 border border-slate-200 rounded-lg p-1 bg-white text-xs">
             <button
@@ -213,12 +236,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
           </button>
 
-          {/* Reset / New Invoice button */}
+          {/* Reset / Clear Customer & Items button */}
           <button
             type="button"
             onClick={onReset}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-colors shadow-2xs cursor-pointer"
-            title="รีเซ็ตและสร้างใบกำกับภาษีใบใหม่ (ขึ้นเลขที่บิลถัดไปอัตโนมัติ)"
+            title="รีเซ็ตล้างข้อมูลลูกค้าและรายการสินค้า (คงเลขที่บิลเดิมไว้)"
           >
             <RotateCcw className="w-3.5 h-3.5 text-orange-600" />
             <span>รีเซ็ต</span>
