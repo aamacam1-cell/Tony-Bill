@@ -77,6 +77,8 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
   onOpenIssuerModal,
 }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [editingPriceIdx, setEditingPriceIdx] = useState<number | null>(null);
+  const [editingPriceVal, setEditingPriceVal] = useState<string>('');
 
   // Determine selected customer ID for controlled select dropdown
   const selectedCustomerId = useMemo(() => {
@@ -140,6 +142,8 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
       ]);
       return;
     }
+    setEditingPriceIdx(null);
+    setEditingPriceVal('');
     const updated = items.filter((_, i) => i !== index);
     onItemsChange(updated);
   };
@@ -161,7 +165,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
       target.quantity = q;
       target.amount = Math.round(q * target.unitPrice * 100) / 100;
     } else if (field === 'unitPrice') {
-      const valStr = String(value).trim();
+      const valStr = String(value).replace(/,/g, '').trim();
       const p = valStr === '' ? 0 : parseFloat(valStr) || 0;
       target.unitPrice = p;
       target.amount = Math.round(target.quantity * p * 100) / 100;
@@ -651,17 +655,38 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                         />
                       </td>
 
-                      {/* Unit Price: ถ้าไม่มีข้อมูลปล่อยเป็นช่องว่าง ไม่แสดง 0.00 */}
+                      {/* Unit Price: ทำตัวเลขของช่องนี้ให้มีหน่วยทศนิยม (และถ้าไม่มีข้อมูลปล่อยเป็นช่องว่าง ไม่แสดง 0.00) */}
                       <td className="py-1 px-1.5 text-right border-r border-orange-400 print:border-black">
                         <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          value={!item.unitPrice || item.unitPrice === 0 ? '' : item.unitPrice}
-                          onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
+                          type="text"
+                          inputMode="decimal"
+                          value={
+                            editingPriceIdx === idx
+                              ? editingPriceVal
+                              : !item.unitPrice || item.unitPrice === 0
+                              ? ''
+                              : fmt(item.unitPrice)
+                          }
+                          onFocus={() => {
+                            setEditingPriceIdx(idx);
+                            setEditingPriceVal(
+                              item.unitPrice && item.unitPrice > 0 ? String(item.unitPrice) : ''
+                            );
+                          }}
+                          onChange={(e) => {
+                            setEditingPriceVal(e.target.value);
+                            handleItemChange(idx, 'unitPrice', e.target.value);
+                          }}
+                          onBlur={() => {
+                            setEditingPriceIdx(null);
+                            setEditingPriceVal('');
+                          }}
                           placeholder=""
-                          className="w-full text-right py-1 px-1.5 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none font-mono text-xs sm:text-sm"
+                          className="w-full text-right py-1 px-1.5 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none font-mono text-xs sm:text-sm print:hidden"
                         />
+                        <div className="hidden print:block font-mono text-xs sm:text-sm text-right py-1 px-1.5 select-all">
+                          {!item.unitPrice || item.unitPrice === 0 ? '' : fmt(item.unitPrice)}
+                        </div>
                       </td>
 
                       {/* Amount: ถ้าไม่มีข้อมูลปล่อยเป็นช่องว่าง ไม่แสดง 0.00 */}
