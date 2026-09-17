@@ -52,8 +52,8 @@ export const TaxIdInput: React.FC<TaxIdInputProps> = ({ value, onChange, readOnl
   ];
 
   const boxSize = compact
-    ? 'w-4 h-5 text-[11px]'
-    : 'w-5 h-6 text-xs';
+    ? 'w-4.5 h-5.5 text-xs sm:w-5 sm:h-6 sm:text-sm'
+    : 'w-5.5 h-6.5 text-sm sm:w-6 sm:h-7 sm:text-base';
 
   return (
     <div className="inline-flex items-center gap-1" onPaste={handlePaste}>
@@ -74,14 +74,14 @@ export const TaxIdInput: React.FC<TaxIdInputProps> = ({ value, onChange, readOnl
                   onChange={(e) => handleDigitChange(digitIdx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(digitIdx, e)}
                   onFocus={(e) => e.target.select()}
-                  className={`${boxSize} text-center font-mono font-semibold border border-slate-300 first:rounded-l-xs last:rounded-r-xs -ml-[1px] first:ml-0 bg-white focus:bg-orange-50 focus:border-orange-500 focus:z-10 focus:outline-none transition-colors print:border-slate-400 print:text-black print:h-4.5 print:w-3.5 print:text-[10px]`}
+                  className={`${boxSize} text-center font-mono font-semibold border border-slate-300 first:rounded-l-xs last:rounded-r-xs -ml-[1px] first:ml-0 bg-white focus:bg-orange-50 focus:border-orange-500 focus:z-10 focus:outline-none transition-colors print:border-slate-400 print:text-black print:h-5 print:w-4 print:text-xs`}
                   title={`หลักที่ ${digitIdx + 1}`}
                 />
               );
             })}
           </div>
           {gIdx < groups.length - 1 && (
-            <span className="text-slate-400 font-bold text-[10px] select-none print:text-slate-600">-</span>
+            <span className="text-slate-400 font-bold text-xs select-none print:text-slate-600">-</span>
           )}
         </React.Fragment>
       ))}

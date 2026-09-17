@@ -276,8 +276,6 @@ export default function App() {
 
   const handleReset = () => {
     const todayISO = getTodayISODate();
-    const todayThai = formatThaiDate(todayISO);
-    // Requirement: ไม่เปลี่ยนเลขที่ใบกำกับภาษีเมื่อกดรีเซ็ต ให้คงเลขล่าสุดที่บันทึกหรือพิมพ์ไว้ (หรือเลขปัจจุบัน)
     const keptInvoiceNo = lastSavedOrPrintedNo || meta.invoiceNo;
 
     // Store previous data in case user wants to undo
@@ -289,8 +287,9 @@ export default function App() {
       prevVatMode: vatMode,
     });
 
-    // Requirement: ล้างข้อมูล เฉพาะ ข้อมูล "ลูกค้า / ผู้ซื้อ"
+    // Requirement 3: เมื่อกดปุ่ม รีเซ็ต ให้ล้างข้อมูล เฉพาะ ของ ลูกค้า / ผู้ซื้อ (รวมถึงตัวเลือกชื่อลูกค้าด้วย)
     setCustomer({
+      alias: '',
       name: '',
       contact: '',
       phone: '',
@@ -300,29 +299,22 @@ export default function App() {
       deliveryDate: todayISO,
     });
 
-    // Requirement: และ รายการสินค้า เท่านั้น เพื่อรอการใส่ข้อมูล ใหม่
+    // Requirement 3: และ รายการสินค้าในตาราง เท่านั้น (แถวว่าง ไม่มีข้อมูล ไม่แสดง 0.00)
     setItems([
       {
         id: String(Date.now()),
         description: '',
-        quantity: 1,
+        quantity: 0,
         unitPrice: 0,
         amount: 0,
       },
     ]);
 
-    // คงเลขที่ใบกำกับล่าสุดที่บันทึกหรือพิมพ์ไว้ และคงชื่อผู้รับเงินไว้
+    // เคลียร์เฉพาะผู้รับสินค้า แต่คงเลขที่ใบกำกับ, วันที่, และชื่อผู้รับเงิน/แคชเชียร์ไว้ครบถ้วน
     setMeta((prevMeta) => ({
       ...prevMeta,
-      docType: 'ORIGINAL',
       invoiceNo: keptInvoiceNo,
-      poNo: '',
-      jobName: '',
-      docDate: todayISO,
       receiverName: '',
-      receiverDate: todayThai,
-      cashierName: prevMeta.cashierName,
-      cashierDate: todayThai,
     }));
   };
 
@@ -385,8 +377,8 @@ export default function App() {
       {/* Main Workspace / A4 Sheet View */}
       <main className="flex-1 overflow-x-auto py-6 px-2 sm:px-4 flex flex-col items-center">
         {/* Info banner for multi-page printing */}
-        <div className="no-print max-w-4xl w-full mb-4 px-3 py-2 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-between text-xs text-orange-900 shadow-2xs">
-          <div className="flex items-center gap-2">
+        <div className="no-print max-w-4xl w-full mb-4 px-4 py-2.5 rounded-lg bg-orange-50 border border-orange-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-orange-950 font-medium shadow-2xs">
+          <div className="flex items-center gap-2.5">
             <Layers className="w-4 h-4 text-orange-600 shrink-0" />
             <span>
               <strong>ระบบจะพิมพ์พร้อมกัน 2 หน้าอัตโนมัติ:</strong> หน้า 1 (ต้นฉบับ) และ หน้า 2 (สำเนา) ข้อมูลแก้ไขจะเชื่อมโยงกันแบบเรียลไทม์
@@ -395,7 +387,7 @@ export default function App() {
           <button
             type="button"
             onClick={handlePrint}
-            className="shrink-0 px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded font-medium shadow-2xs text-[11px] cursor-pointer"
+            className="shrink-0 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-2xs text-xs sm:text-sm cursor-pointer transition-colors"
           >
             กดพิมพ์ (2 หน้า)
           </button>
@@ -415,12 +407,12 @@ export default function App() {
           {/* PAGE 1: ORIGINAL (ต้นฉบับ)                                                */}
           {/* ========================================================================= */}
           <section className="w-full flex flex-col items-center">
-            <div className="no-print w-full max-w-[210mm] mb-1.5 flex items-center justify-between text-xs text-slate-600 px-1">
+            <div className="no-print w-full max-w-[210mm] mb-1.5 flex items-center justify-between text-xs sm:text-sm text-slate-600 px-1">
               <span className="font-bold flex items-center gap-1.5 text-orange-700">
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-4 h-4" />
                 <span>หน้าที่ 1: ใบกำกับภาษี / ใบเสร็จรับเงิน (ต้นฉบับ - ORIGINAL)</span>
               </span>
-              <span className="text-[11px] bg-white px-2 py-0.5 rounded shadow-2xs border border-slate-200">
+              <span className="text-xs bg-white px-2.5 py-0.5 rounded shadow-2xs border border-slate-200 font-semibold text-slate-700">
                 A4 กระดาษหน้าที่ 1
               </span>
             </div>
@@ -450,9 +442,9 @@ export default function App() {
           </section>
 
           {/* Screen separator between Page 1 and Page 2 */}
-          <div className="no-print w-full max-w-[210mm] flex items-center gap-3 my-2 opacity-70">
+          <div className="no-print w-full max-w-[210mm] flex items-center gap-3 my-3 opacity-80">
             <div className="flex-1 border-b border-dashed border-slate-400" />
-            <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
+            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded border border-slate-300">
               ตัดขึ้นหน้าใหม่ (Page 2)
             </span>
             <div className="flex-1 border-b border-dashed border-slate-400" />
@@ -462,12 +454,12 @@ export default function App() {
           {/* PAGE 2: COPY (สำเนา)                                                      */}
           {/* ========================================================================= */}
           <section className="w-full flex flex-col items-center">
-            <div className="no-print w-full max-w-[210mm] mb-1.5 flex items-center justify-between text-xs text-slate-600 px-1">
-              <span className="font-bold flex items-center gap-1.5 text-slate-700">
-                <FileText className="w-3.5 h-3.5" />
+            <div className="no-print w-full max-w-[210mm] mb-1.5 flex items-center justify-between text-xs sm:text-sm text-slate-600 px-1">
+              <span className="font-bold flex items-center gap-1.5 text-slate-800">
+                <FileText className="w-4 h-4" />
                 <span>หน้าที่ 2: ใบกำกับภาษี / ใบเสร็จรับเงิน (สำเนา - COPY)</span>
               </span>
-              <span className="text-[11px] bg-white px-2 py-0.5 rounded shadow-2xs border border-slate-200">
+              <span className="text-xs bg-white px-2.5 py-0.5 rounded shadow-2xs border border-slate-200 font-semibold text-slate-700">
                 A4 กระดาษหน้าที่ 2
               </span>
             </div>
@@ -540,10 +532,10 @@ export default function App() {
         <aside
           id="save-invoice-toast-banner"
           aria-label="แจ้งเตือนการบันทึกเอกสาร"
-          className="no-print fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs max-w-md"
+          className="no-print fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs sm:text-sm max-w-md"
         >
-          <div className="flex items-center gap-2">
-            <BookmarkCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5">
+            <BookmarkCheck className="w-5 h-5 text-emerald-400 shrink-0" />
             <span>
               {saveToast.message}{' '}
               <strong className="text-orange-400 font-mono">({saveToast.invoiceNo})</strong>
@@ -552,10 +544,10 @@ export default function App() {
           <button
             type="button"
             onClick={() => setSaveToast(null)}
-            className="text-slate-400 hover:text-white p-0.5 rounded transition-colors cursor-pointer ml-auto"
+            className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer ml-auto"
             title="ปิดการแจ้งเตือน"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </aside>
       )}
@@ -565,10 +557,10 @@ export default function App() {
         <aside
           id="reset-toast-banner"
           aria-label="แจ้งเตือนการรีเซ็ต"
-          className="no-print fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs max-w-md"
+          className="no-print fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3.5 rounded-xl shadow-2xl border border-slate-700 flex flex-wrap items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs sm:text-sm max-w-md"
         >
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <span>
               ล้างข้อมูลลูกค้าและรายการสินค้าเรียบร้อย{' '}
               <strong className="text-orange-400 font-mono">({resetNotification.invoiceNo})</strong>
@@ -578,19 +570,19 @@ export default function App() {
             <button
               type="button"
               onClick={handleUndoReset}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-orange-400 hover:text-orange-300 font-semibold rounded-md transition-colors cursor-pointer border border-slate-600"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-orange-400 hover:text-orange-300 font-bold rounded-lg transition-colors cursor-pointer border border-slate-600 text-xs sm:text-sm"
               title="กู้คืนข้อมูลเอกสารที่กรอกไว้ก่อนหน้านี้"
             >
-              <Undo2 className="w-3.5 h-3.5" />
+              <Undo2 className="w-4 h-4" />
               <span>เลิกทำ (Undo)</span>
             </button>
             <button
               type="button"
               onClick={() => setResetNotification(null)}
-              className="text-slate-400 hover:text-white p-0.5 rounded transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
               title="ปิดการแจ้งเตือน"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </aside>

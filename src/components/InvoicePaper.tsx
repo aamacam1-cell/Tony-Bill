@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Plus,
   Trash2,
@@ -28,7 +28,7 @@ import {
 } from '../types';
 import { TaxIdInput } from './TaxIdInput';
 import { LogoUploader } from './LogoUploader';
-import { formatThaiDate } from '../utils/dateFormatter';
+import { formatThaiDate, getTodayISODate } from '../utils/dateFormatter';
 import { getVatModeLabel } from '../utils/customerDb';
 
 interface InvoicePaperProps {
@@ -78,6 +78,17 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
 }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // Determine selected customer ID for controlled select dropdown
+  const selectedCustomerId = useMemo(() => {
+    if (!customer.name && !customer.alias) return '';
+    const match = customers.find(
+      (c) =>
+        (customer.alias && c.alias === customer.alias) ||
+        (customer.name && c.companyName === customer.name)
+    );
+    return match ? match.id : '';
+  }, [customers, customer.alias, customer.name]);
+
   // Helper to update customer
   const updateCustomer = (field: keyof CustomerInfo, val: string) => {
     onCustomerChange({ ...customer, [field]: val });
@@ -93,26 +104,26 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
     onMetaChange({ ...meta, [field]: val });
   };
 
-  // Add new item row
+  // Add new item row (เริ่มแถวใหม่เป็นค่าว่าง ไม่มี 0.00)
   const handleAddItem = () => {
     const newItem: InvoiceItem = {
       id: String(Date.now()),
       description: '',
-      quantity: 1,
+      quantity: 0,
       unitPrice: 0,
       amount: 0,
     };
     onItemsChange([...items, newItem]);
   };
 
-  // Remove item row
+  // Remove item row (หากลบจนหมด ให้เหลือ 1 แถวว่างเปล่า ไม่แสดง 0.00)
   const handleRemoveItem = (index: number) => {
     if (items.length <= 1) {
       onItemsChange([
         {
           id: String(Date.now()),
           description: '',
-          quantity: 1,
+          quantity: 0,
           unitPrice: 0,
           amount: 0,
         },
@@ -135,11 +146,13 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
     if (field === 'description') {
       target.description = String(value);
     } else if (field === 'quantity') {
-      const q = parseFloat(String(value)) || 0;
+      const valStr = String(value).trim();
+      const q = valStr === '' ? 0 : parseFloat(valStr) || 0;
       target.quantity = q;
       target.amount = Math.round(q * target.unitPrice * 100) / 100;
     } else if (field === 'unitPrice') {
-      const p = parseFloat(String(value)) || 0;
+      const valStr = String(value).trim();
+      const p = valStr === '' ? 0 : parseFloat(valStr) || 0;
       target.unitPrice = p;
       target.amount = Math.round(target.quantity * p * 100) / 100;
     }
@@ -159,7 +172,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
   const isOriginal = docType === 'ORIGINAL';
 
   return (
-    <div className="a4-page a4-paper text-slate-800 flex flex-col justify-between text-xs leading-normal bg-white">
+    <div className="a4-page a4-paper text-slate-800 flex flex-col justify-between text-sm leading-relaxed bg-white">
       {/* Top Main Section */}
       <div>
         {/* ========================================================================= */}
@@ -178,10 +191,10 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
 
             {/* Top Center: Centered 2-line Title */}
             <div className="text-center px-1">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-950 print:text-black leading-tight whitespace-nowrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950 print:text-black leading-tight whitespace-nowrap">
                 ใบกำกับภาษี / ใบเสร็จรับเงิน
               </h1>
-              <p className="text-[11px] font-semibold text-slate-600 tracking-wider mt-0.5 whitespace-nowrap">
+              <p className="text-xs sm:text-sm font-bold text-slate-600 tracking-wider mt-0.5 whitespace-nowrap">
                 TAX INVOICE / RECEIPT
               </p>
             </div>
@@ -189,16 +202,16 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
             {/* Top Right: Box displaying "ต้นฉบับ ORIGINAL" or "สำเนา COPY" */}
             <div className="flex items-center justify-end">
               <div
-                className={`border-2 rounded-md px-3 py-1 text-center min-w-[110px] print:border-black print:bg-transparent ${
+                className={`border-2 rounded-md px-3.5 py-1.5 text-center min-w-[120px] print:border-black print:bg-transparent ${
                   isOriginal
                     ? 'border-orange-600 bg-orange-50/40 text-orange-700'
                     : 'border-slate-500 bg-slate-100/60 text-slate-800'
                 }`}
               >
-                <div className="font-bold text-sm leading-none print:text-black">
+                <div className="font-bold text-base sm:text-lg leading-tight print:text-black">
                   {isOriginal ? 'ต้นฉบับ' : 'สำเนา'}
                 </div>
-                <div className="text-[10px] font-semibold tracking-wider opacity-80 mt-0.5 leading-none print:text-black">
+                <div className="text-xs font-semibold tracking-wider opacity-80 mt-0.5 leading-none print:text-black">
                   {isOriginal ? 'ORIGINAL' : 'COPY'}
                 </div>
               </div>
@@ -206,10 +219,10 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
           </div>
 
           {/* Under Header: Compact Meta Fields Grid (เลขที่, วันที่, PO, ผู้ติดต่อ) */}
-          <div className="mt-1.5 pt-1.5 border-t border-dashed border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+          <div className="mt-2 pt-2 border-t border-dashed border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
             {/* เลขที่ใบกำกับ */}
             <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-[11px]">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
                 เลขที่:
               </span>
               <div className="flex items-center gap-0.5 flex-1 min-w-0">
@@ -218,34 +231,34 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                   value={meta.invoiceNo}
                   onChange={(e) => updateMeta('invoiceNo', e.target.value)}
                   placeholder="เช่น TK69 021"
-                  className="font-bold text-orange-600 print:text-black px-1.5 py-0.5 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs"
+                  className="font-bold text-orange-600 print:text-black px-2 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-sm sm:text-base font-mono"
                 />
                 <button
                   type="button"
                   onClick={onIncrementInvoiceNo || onRegenerateInvoiceNo}
-                  className="no-print p-0.5 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                  className="no-print p-1 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
                   title="เพิ่มเลขที่บิลถัดไป (+1)"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                 </button>
                 {onOpenInvoiceNoSettings && (
                   <button
                     type="button"
                     onClick={onOpenInvoiceNoSettings}
-                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    className="no-print p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
                     title="ตั้งค่าเลขที่เริ่มต้น"
                   >
-                    <Settings className="w-3 h-3" />
+                    <Settings className="w-3.5 h-3.5" />
                   </button>
                 )}
                 {!onOpenInvoiceNoSettings && (
                   <button
                     type="button"
                     onClick={onRegenerateInvoiceNo}
-                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    className="no-print p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
                     title="สร้างเลขที่ใบกำกับอัตโนมัติ"
                   >
-                    <RefreshCw className="w-3 h-3" />
+                    <RefreshCw className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -253,17 +266,17 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
 
             {/* วันที่เอกสาร */}
             <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-[11px]">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
                 วันที่:
               </span>
               <div className="relative flex-1 min-w-0">
                 <button
                   type="button"
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="w-full text-left font-medium text-slate-800 bg-white print:bg-transparent px-1.5 py-0.5 rounded border border-slate-200 focus:border-orange-400 flex items-center justify-between text-xs cursor-pointer"
+                  className="w-full text-left font-medium text-slate-800 bg-white print:bg-transparent px-2 py-1 rounded border border-slate-200 focus:border-orange-400 flex items-center justify-between text-xs sm:text-sm cursor-pointer"
                 >
                   <span>{formatThaiDate(meta.docDate)}</span>
-                  <Calendar className="w-3 h-3 text-orange-600 no-print shrink-0 ml-1" />
+                  <Calendar className="w-3.5 h-3.5 text-orange-600 no-print shrink-0 ml-1" />
                 </button>
                 {showDatePicker && (
                   <div className="no-print absolute z-20 top-full mt-1 bg-white p-2 rounded-lg shadow-xl border border-slate-200">
@@ -274,7 +287,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                         updateMeta('docDate', e.target.value);
                         setShowDatePicker(false);
                       }}
-                      className="text-xs p-1 border rounded"
+                      className="text-sm p-1.5 border rounded"
                     />
                   </div>
                 )}
@@ -283,7 +296,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
 
             {/* เลขที่ PO */}
             <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-[11px]">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
                 เลขที่ PO:
               </span>
               <input
@@ -291,13 +304,13 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 value={meta.poNo}
                 onChange={(e) => updateMeta('poNo', e.target.value)}
                 placeholder="ระบุถ้ามี"
-                className="px-1.5 py-0.5 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs"
+                className="px-2 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs sm:text-sm"
               />
             </div>
 
             {/* ผู้ติดต่อ (เปลี่ยนจากชื่องาน) */}
             <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-[11px]">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
                 ผู้ติดต่อ:
               </span>
               <input
@@ -305,7 +318,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 value={meta.jobName}
                 onChange={(e) => updateMeta('jobName', e.target.value)}
                 placeholder="ระบุผู้ติดต่อ"
-                className="px-1.5 py-0.5 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs truncate"
+                className="px-2 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs sm:text-sm truncate"
               />
             </div>
           </div>
@@ -318,30 +331,30 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
         {/* ========================================================================= */}
         <div className="space-y-1 pb-2 mb-2 border-b border-slate-200">
           {/* Top: Issuer Info (ข้อมูลผู้ออกใบกำกับภาษี / ผู้ขาย) */}
-          <div className="bg-slate-50/60 print:bg-transparent rounded-md p-2 border border-slate-200/80 print:border-none print:p-0">
-            <div className="flex items-center justify-between text-orange-600 print:text-black font-bold text-xs pb-1 mb-1 border-b border-slate-200 print:border-slate-300">
-              <div className="flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5" />
+          <div className="bg-slate-50/60 print:bg-transparent rounded-md p-2.5 border border-slate-200/80 print:border-none print:p-0">
+            <div className="flex items-center justify-between text-orange-600 print:text-black font-bold text-xs sm:text-sm pb-1 mb-1.5 border-b border-slate-200 print:border-slate-300">
+              <div className="flex items-center gap-1.5">
+                <Building2 className="w-4 h-4" />
                 <span>ผู้ออกใบกำกับภาษี / ผู้ขาย</span>
               </div>
               {onOpenIssuerModal && (
                 <button
                   type="button"
                   onClick={onOpenIssuerModal}
-                  className="no-print inline-flex items-center gap-1 text-[10px] px-2 py-0.5 bg-white hover:bg-orange-50 border border-slate-300 hover:border-orange-400 text-slate-700 hover:text-orange-700 rounded shadow-2xs font-semibold transition-colors cursor-pointer"
+                  className="no-print inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-white hover:bg-orange-50 border border-slate-300 hover:border-orange-400 text-slate-700 hover:text-orange-700 rounded shadow-2xs font-semibold transition-colors cursor-pointer"
                   title="แก้ไขข้อมูลร้านค้า / บริษัทผู้ออกใบกำกับภาษี"
                 >
-                  <Store className="w-3 h-3 text-orange-600" />
+                  <Store className="w-3.5 h-3.5 text-orange-600" />
                   <span>แก้ไขข้อมูลร้าน</span>
                 </button>
               )}
             </div>
 
-            <div className="space-y-1 text-xs">
+            <div className="space-y-1.5 text-xs sm:text-sm">
               {/* บรรทัด 1: ชื่อบริษัท + ย้าย สาขา มาต่อท้ายในบรรทัดเดียวกัน */}
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                <div className="flex items-center gap-1 flex-1 min-w-[200px]">
-                  <span className="text-slate-600 print:text-black font-medium text-[11px] whitespace-nowrap shrink-0">
+                <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0">
                     ชื่อ:
                   </span>
                   <input
@@ -349,11 +362,11 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={issuer.name}
                     onChange={(e) => updateIssuer('name', e.target.value)}
                     placeholder="ชื่อบริษัท / ร้านค้า"
-                    className="w-full font-bold text-slate-900 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-xs"
+                    className="w-full font-bold text-slate-900 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-sm sm:text-base"
                   />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="font-medium text-slate-600 print:text-black whitespace-nowrap text-[11px]">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-semibold text-slate-700 print:text-black whitespace-nowrap text-xs sm:text-sm">
                     สาขา:
                   </span>
                   <input
@@ -361,15 +374,15 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={issuer.branch}
                     onChange={(e) => updateIssuer('branch', e.target.value)}
                     placeholder="เช่น สำนักงานใหญ่ หรือ 00000"
-                    className="w-36 px-1.5 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-[11px]"
+                    className="w-40 px-2 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               {/* บรรทัด 2: ที่อยู่ + ย้าย เบอร์โทร ให้ไปอยู่ต่อท้ายในบรรทัดเดียวกัน */}
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                <div className="flex items-center gap-1 flex-1 min-w-[200px]">
-                  <span className="text-slate-600 print:text-black font-medium text-[11px] whitespace-nowrap shrink-0">
+                <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0">
                     ที่อยู่:
                   </span>
                   <input
@@ -377,12 +390,12 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={issuer.address}
                     onChange={(e) => updateIssuer('address', e.target.value)}
                     placeholder="ที่อยู่ร้านค้า"
-                    className="w-full text-slate-700 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-[11px]"
+                    className="w-full text-slate-800 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-xs sm:text-sm"
                   />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="font-medium text-slate-600 print:text-black whitespace-nowrap text-[11px] flex items-center gap-0.5">
-                    <Phone className="w-2.5 h-2.5 text-orange-600 print:text-black shrink-0" />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-semibold text-slate-700 print:text-black whitespace-nowrap text-xs sm:text-sm flex items-center gap-0.5">
+                    <Phone className="w-3.5 h-3.5 text-orange-600 print:text-black shrink-0" />
                     <span>โทรศัพท์:</span>
                   </span>
                   <input
@@ -390,14 +403,14 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={issuer.phone}
                     onChange={(e) => updateIssuer('phone', e.target.value)}
                     placeholder="เช่น 02-719-8999, 089-123-4567"
-                    className="w-44 px-1.5 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-[11px]"
+                    className="w-44 px-2 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               {/* บรรทัด 3: ขยับ เลขประจำตัวผู้เสียภาษี ขึ้นไปติดกับบรรทัดที่อยู่ */}
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="font-medium text-slate-600 print:text-black text-[11px] whitespace-nowrap">
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="font-semibold text-slate-700 print:text-black text-xs sm:text-sm whitespace-nowrap">
                   เลขประจำตัวผู้เสียภาษี:
                 </span>
                 <TaxIdInput
@@ -410,57 +423,71 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
           </div>
 
           {/* เว้นบรรทัดว่าง ระหว่าง ส่วนของ "ผู้ขาย" กับ "ผู้ซื้อ" ให้เห็นชัดเจน */}
-          <div className="h-3 my-1.5 print:h-4 print:my-2" aria-hidden="true" />
+          <div className="h-2 my-1 print:h-2 print:my-1" aria-hidden="true" />
 
           {/* Bottom: Customer Info (ข้อมูลลูกค้า / ผู้ซื้อ) With Local Database Dropdown & Quick Select */}
-          <div className="bg-slate-50/60 print:bg-transparent rounded-md p-2 border border-slate-200/80 print:border-none print:p-0">
+          <div className="bg-slate-50/60 print:bg-transparent rounded-md p-2.5 border border-slate-200/80 print:border-none print:p-0">
             {/* Customer Header + Dropdown Search */}
-            <div className="flex items-center justify-between text-slate-900 font-bold text-xs pb-1 mb-1 border-b border-slate-200 print:border-slate-300">
-              <div className="flex items-center gap-1 text-orange-600 print:text-black">
-                <User className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-between text-slate-900 font-bold text-xs sm:text-sm pb-1 mb-1.5 border-b border-slate-200 print:border-slate-300">
+              <div className="flex items-center gap-1.5 text-orange-600 print:text-black">
+                <User className="w-4 h-4" />
                 <span>ลูกค้า / ผู้ซื้อ</span>
               </div>
 
               {/* Action buttons for Customer Database */}
-              <div className="no-print flex items-center gap-1 text-[11px]">
+              <div className="no-print flex items-center gap-1.5 text-xs">
                 <button
                   type="button"
                   onClick={onQuickSaveCustomer}
-                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-white border border-slate-300 hover:border-orange-400 hover:text-orange-600 rounded shadow-2xs font-medium transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-slate-300 hover:border-orange-400 hover:text-orange-600 rounded shadow-2xs font-semibold transition-colors cursor-pointer"
                   title="บันทึกข้อมูลลูกค้าที่กรอกอยู่นี้ลงในฐานข้อมูล"
                 >
-                  <BookmarkPlus className="w-3 h-3 text-orange-600" />
+                  <BookmarkPlus className="w-3.5 h-3.5 text-orange-600" />
                   <span>บันทึกคนนี้</span>
                 </button>
                 <button
                   type="button"
                   onClick={onOpenCustomerModal}
-                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-orange-600 hover:bg-orange-700 text-white rounded shadow-2xs font-semibold transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded shadow-2xs font-semibold transition-colors cursor-pointer"
                   title="เปิดหน้าต่างจัดการฐานข้อมูลลูกค้าทั้งหมด"
                 >
-                  <Users className="w-3 h-3" />
+                  <Users className="w-3.5 h-3.5" />
                   <span>จัดการฐานข้อมูล</span>
                 </button>
               </div>
             </div>
 
-            {/* Dropdown to select customer */}
-            <div className="no-print mb-1.5 flex items-center gap-1 min-w-0 max-w-full overflow-hidden">
-              <span className="text-[10px] font-semibold text-slate-600 whitespace-nowrap flex items-center gap-0.5 shrink-0">
-                <Tag className="w-3 h-3 text-orange-600" />
+            {/* Dropdown to select customer (ซิงค์สถานะ เมื่อกดรีเซ็ตจะกลับเป็นค่าเริ่มต้นทันที) */}
+            <div className="no-print mb-2 flex items-center gap-2 min-w-0 max-w-full overflow-hidden">
+              <span className="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1 shrink-0">
+                <Tag className="w-3.5 h-3.5 text-orange-600" />
                 <span>เลือกชื่อลูกค้า:</span>
               </span>
               <select
+                value={selectedCustomerId}
                 onChange={(e) => {
-                  const found = customers.find((c) => c.id === e.target.value);
+                  const val = e.target.value;
+                  if (!val) {
+                    onCustomerChange({
+                      alias: '',
+                      name: '',
+                      contact: '',
+                      phone: '',
+                      address: '',
+                      taxId: '',
+                      branch: 'สำนักงานใหญ่',
+                      deliveryDate: customer.deliveryDate || getTodayISODate(),
+                    });
+                    return;
+                  }
+                  const found = customers.find((c) => c.id === val);
                   if (found) {
                     onSelectCustomer(found);
                   }
                 }}
-                defaultValue=""
-                className="w-full min-w-0 max-w-full px-1.5 py-0.5 bg-white border border-orange-300 rounded text-xs font-medium text-slate-800 focus:outline-none focus:border-orange-500 truncate cursor-pointer"
+                className="w-full min-w-0 max-w-full px-2 py-1 bg-white border border-orange-300 rounded text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-orange-500 truncate cursor-pointer"
               >
-                <option value="" disabled>
+                <option value="">
                   -- เลือกชื่อลูกค้า --
                 </option>
                 {customers.map((c) => (
@@ -471,11 +498,11 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
               </select>
             </div>
 
-            <div className="space-y-1 text-xs">
+            <div className="space-y-1.5 text-xs sm:text-sm">
               {/* บรรทัด 1: ชื่อลูกค้า + ย้าย สาขา มาต่อท้ายในบรรทัดเดียวกัน */}
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                <div className="flex items-center gap-1 flex-1 min-w-[200px]">
-                  <span className="text-slate-600 print:text-black font-medium text-[11px] whitespace-nowrap shrink-0">
+                <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0">
                     ชื่อ:
                   </span>
                   <input
@@ -483,11 +510,11 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={customer.name}
                     onChange={(e) => updateCustomer('name', e.target.value)}
                     placeholder="ชื่อบริษัท / ลูกค้า / ผู้ซื้อ"
-                    className="w-full font-bold text-slate-900 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-xs"
+                    className="w-full font-bold text-slate-900 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-sm sm:text-base"
                   />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="font-medium text-slate-600 print:text-black whitespace-nowrap text-[11px]">
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-semibold text-slate-700 print:text-black whitespace-nowrap text-xs sm:text-sm">
                     สาขา:
                   </span>
                   <input
@@ -495,15 +522,15 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={customer.branch || ''}
                     onChange={(e) => updateCustomer('branch', e.target.value)}
                     placeholder="เช่น สำนักงานใหญ่ หรือ 00000"
-                    className="w-36 px-1.5 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-[11px]"
+                    className="w-40 px-2 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               {/* บรรทัด 2: ที่อยู่ + ย้าย เบอร์โทร ให้ไปอยู่ต่อท้ายในบรรทัดเดียวกัน */}
               <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                <div className="flex items-center gap-1 flex-1 min-w-[200px]">
-                  <span className="text-slate-600 print:text-black font-medium text-[11px] whitespace-nowrap shrink-0">
+                <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
+                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0">
                     ที่อยู่:
                   </span>
                   <input
@@ -511,12 +538,12 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={customer.address || ''}
                     onChange={(e) => updateCustomer('address', e.target.value)}
                     placeholder="ที่อยู่ลูกค้า (เลขที่, ถนน, ตำบล, อำเภอ, จังหวัด, รหัสไปรษณีย์)"
-                    className="w-full text-slate-700 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-[11px]"
+                    className="w-full text-slate-800 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-xs sm:text-sm"
                   />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className="font-medium text-slate-600 print:text-black whitespace-nowrap text-[11px] flex items-center gap-0.5">
-                    <Phone className="w-2.5 h-2.5 text-orange-600 print:text-black shrink-0" />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="font-semibold text-slate-700 print:text-black whitespace-nowrap text-xs sm:text-sm flex items-center gap-0.5">
+                    <Phone className="w-3.5 h-3.5 text-orange-600 print:text-black shrink-0" />
                     <span>โทร:</span>
                   </span>
                   <input
@@ -524,14 +551,14 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                     value={customer.phone || ''}
                     onChange={(e) => updateCustomer('phone', e.target.value)}
                     placeholder="เบอร์โทรลูกค้า"
-                    className="w-44 px-1.5 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-[11px]"
+                    className="w-44 px-2 py-0.5 bg-white print:bg-transparent border border-slate-200 print:border-none rounded focus:border-orange-400 focus:outline-none text-xs sm:text-sm font-medium"
                   />
                 </div>
               </div>
 
               {/* บรรทัด 3: ขยับ เลขประจำตัวผู้เสียภาษี ขึ้นไปติดกับบรรทัดที่อยู่ */}
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="font-medium text-slate-600 print:text-black text-[11px] whitespace-nowrap">
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="font-semibold text-slate-700 print:text-black text-xs sm:text-sm whitespace-nowrap">
                   เลขประจำตัวผู้เสียภาษี:
                 </span>
                 <TaxIdInput
@@ -549,106 +576,115 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
         {/* ========================================================================= */}
         <div className="mb-3">
           <div className="border border-orange-400 rounded overflow-hidden print:border-black">
-            <table className="w-full text-xs text-left border-collapse">
+            <table className="w-full text-xs sm:text-sm text-left border-collapse">
               <thead>
                 <tr className="bg-orange-500 text-white font-bold border-b border-orange-400 print:bg-slate-200 print:text-black print:border-black">
-                  <th className="w-10 py-1.5 px-1 text-center border-r border-orange-400 print:border-black">
+                  <th className="w-12 py-2 px-2 text-center border-r border-orange-400 print:border-black">
                     ลำดับ
                   </th>
-                  <th className="py-1.5 px-2 border-r border-orange-400 print:border-black">
+                  <th className="py-2 px-3 border-r border-orange-400 print:border-black">
                     รายการสินค้า / บริการ (DESCRIPTION)
                   </th>
-                  <th className="w-20 py-1.5 px-2 text-center border-r border-orange-400 print:border-black">
+                  <th className="w-24 py-2 px-2 text-center border-r border-orange-400 print:border-black">
                     จำนวน
                   </th>
-                  <th className="w-24 py-1.5 px-2 text-right border-r border-orange-400 print:border-black">
+                  <th className="w-28 py-2 px-2 text-right border-r border-orange-400 print:border-black">
                     ราคา/หน่วย
                   </th>
-                  <th className="w-28 py-1.5 px-2 text-right border-r border-orange-400 print:border-black">
+                  <th className="w-32 py-2 px-3 text-right border-r border-orange-400 print:border-black">
                     ราคารวม
                   </th>
-                  <th className="w-8 py-1.5 text-center no-print">
+                  <th className="w-10 py-2 text-center no-print">
                     ลบ
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-orange-200 print:divide-slate-300">
-                {items.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-orange-50/20 transition-colors">
-                    {/* Index */}
-                    <td className="py-1 px-1 text-center font-medium text-slate-600 border-r border-orange-400 print:border-black select-none text-[11px]">
-                      {idx + 1}
-                    </td>
+                {items.map((item, idx) => {
+                  const hasData = Boolean(
+                    (item.description && item.description.trim()) ||
+                    (item.quantity && item.quantity > 0) ||
+                    (item.unitPrice && item.unitPrice > 0) ||
+                    (item.amount && item.amount > 0)
+                  );
 
-                    {/* Description */}
-                    <td className="py-1 px-2 border-r border-orange-400 print:border-black">
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
-                        placeholder="ระบุชื่อสินค้า หรือรายละเอียดบริการ..."
-                        className="w-full py-0.5 px-1 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none text-xs"
-                      />
-                    </td>
+                  return (
+                    <tr key={item.id} className="hover:bg-orange-50/20 transition-colors">
+                      {/* Index */}
+                      <td className="py-1.5 px-2 text-center font-semibold text-slate-700 border-r border-orange-400 print:border-black select-none text-xs sm:text-sm">
+                        {idx + 1}
+                      </td>
 
-                    {/* Quantity */}
-                    <td className="py-1 px-1 border-r border-orange-400 print:border-black">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={item.quantity === 0 ? '' : item.quantity}
-                        onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
-                        placeholder="0"
-                        className="w-full text-center py-0.5 px-1 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none font-medium text-xs"
-                      />
-                    </td>
+                      {/* Description */}
+                      <td className="py-1 px-2 border-r border-orange-400 print:border-black">
+                        <input
+                          type="text"
+                          value={item.description}
+                          onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
+                          placeholder={idx === 0 && !hasData ? 'ระบุชื่อสินค้า หรือรายละเอียดบริการ...' : ''}
+                          className="w-full py-1 px-1.5 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none text-xs sm:text-sm"
+                        />
+                      </td>
 
-                    {/* Unit Price */}
-                    <td className="py-1 px-1 text-right border-r border-orange-400 print:border-black">
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={item.unitPrice === 0 ? '' : item.unitPrice}
-                        onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
-                        placeholder="0.00"
-                        className="w-full text-right py-0.5 px-1 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none font-mono text-xs"
-                      />
-                    </td>
+                      {/* Quantity: ถ้าไม่มีข้อมูลปล่อยเป็นช่องว่าง ไม่แสดง 0 */}
+                      <td className="py-1 px-1.5 border-r border-orange-400 print:border-black">
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={!item.quantity || item.quantity === 0 ? '' : item.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
+                          placeholder=""
+                          className="w-full text-center py-1 px-1 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none font-semibold text-xs sm:text-sm"
+                        />
+                      </td>
 
-                    {/* Amount */}
-                    <td className="py-1 px-2 text-right font-mono font-semibold text-slate-900 border-r border-orange-400 print:border-black select-all text-xs">
-                      {fmt(item.amount)}
-                    </td>
+                      {/* Unit Price: ถ้าไม่มีข้อมูลปล่อยเป็นช่องว่าง ไม่แสดง 0.00 */}
+                      <td className="py-1 px-1.5 text-right border-r border-orange-400 print:border-black">
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={!item.unitPrice || item.unitPrice === 0 ? '' : item.unitPrice}
+                          onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
+                          placeholder=""
+                          className="w-full text-right py-1 px-1.5 bg-transparent rounded focus:bg-white focus:ring-1 focus:ring-orange-400 focus:outline-none font-mono text-xs sm:text-sm"
+                        />
+                      </td>
 
-                    {/* Delete action button (hidden in print) */}
-                    <td className="py-1 px-1 text-center no-print">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleRemoveItem(idx);
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer inline-flex items-center justify-center"
-                        title={items.length > 1 ? 'ลบแถวสินค้านี้' : 'ล้างข้อมูลแถวนี้'}
-                      >
-                        <Trash2 className="w-4 h-4 mx-auto text-slate-400 hover:text-red-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      {/* Amount: ถ้าไม่มีข้อมูลปล่อยเป็นช่องว่าง ไม่แสดง 0.00 */}
+                      <td className="py-1 px-2.5 text-right font-mono font-bold text-slate-900 border-r border-orange-400 print:border-black select-all text-xs sm:text-sm">
+                        {item.amount && item.amount > 0 ? fmt(item.amount) : ''}
+                      </td>
+
+                      {/* Delete action button (hidden in print) */}
+                      <td className="py-1 px-1 text-center no-print">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveItem(idx);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer inline-flex items-center justify-center"
+                          title={items.length > 1 ? 'ลบแถวสินค้านี้' : 'ล้างข้อมูลแถวนี้'}
+                        >
+                          <Trash2 className="w-4 h-4 mx-auto text-slate-400 hover:text-red-600" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 {/* Add Item Button Row (Hidden in print) */}
                 <tr className="no-print bg-orange-50/30">
-                  <td colSpan={6} className="py-1 px-3">
+                  <td colSpan={6} className="py-1.5 px-3">
                     <button
                       type="button"
                       onClick={handleAddItem}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 hover:text-orange-900 py-0.5 px-2 rounded hover:bg-orange-100/70 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-orange-700 hover:text-orange-900 py-1 px-3 rounded hover:bg-orange-100/70 transition-colors cursor-pointer"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-4 h-4" />
                       <span>+ เพิ่มรายการสินค้า/บริการ</span>
                     </button>
                   </td>
@@ -658,13 +694,13 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 <tr className="bg-slate-50/80 border-t-2 border-orange-400 print:bg-slate-50 print:border-black">
                   <td
                     colSpan={3}
-                    className="py-2 px-2.5 text-left border-r border-orange-400 print:border-black text-slate-700 align-middle"
+                    className="py-2.5 px-3 text-left border-r border-orange-400 print:border-black text-slate-700 align-middle"
                   >
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-900 shrink-0 text-xs">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-slate-900 shrink-0 text-xs sm:text-sm">
                         จำนวนเงินตัวอักษร:
                       </span>
-                      <span className="font-medium text-slate-800 italic bg-white/70 print:bg-transparent px-1.5 py-0.5 rounded border border-slate-200 print:border-none text-xs">
+                      <span className="font-semibold text-slate-900 italic bg-white/80 print:bg-transparent px-2 py-0.5 rounded border border-slate-300 print:border-none text-xs sm:text-sm">
                         ({calcResult.thaiBahtText})
                       </span>
                     </div>
@@ -682,25 +718,72 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
         </div>
 
         {/* ========================================================================= */}
-        {/* SECTION 5 & 6: SUMMARY TOTALS (Card Removed, Clean Compact Layout)         */}
+        {/* SECTION 5 & 6: SUMMARY TOTALS & VAT MODE SELECTOR                          */}
         {/* ========================================================================= */}
-        <div className="flex justify-end items-start mb-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-3">
+          {/* Left: VAT Mode Selection (No-print) */}
+          <div className="no-print bg-slate-50 border border-slate-200 rounded-lg p-2.5 max-w-sm w-full space-y-1.5">
+            <span className="text-xs sm:text-sm font-bold text-slate-800 block">
+              โหมดการคิดภาษี (VAT Mode):
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => onVatModeChange('ADD_VAT')}
+                className={`px-2.5 py-1 rounded text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  vatMode === 'ADD_VAT'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-orange-50'
+                }`}
+              >
+                + แยกนอก (+7%)
+              </button>
+              <button
+                type="button"
+                onClick={() => onVatModeChange('INC_VAT')}
+                className={`px-2.5 py-1 rounded text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  vatMode === 'INC_VAT'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-emerald-50'
+                }`}
+              >
+                รวมใน (7%)
+              </button>
+              <button
+                type="button"
+                onClick={() => onVatModeChange('NO_VAT')}
+                className={`px-2.5 py-1 rounded text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  vatMode === 'NO_VAT'
+                    ? 'bg-slate-700 text-white shadow-xs'
+                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                ไม่มี VAT (0%)
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              {vatMode === 'ADD_VAT' && 'คำนวณภาษีเพิ่ม 7% จากยอดรวมสินค้า'}
+              {vatMode === 'INC_VAT' && 'ราคาสินค้าในตารางรวมภาษี 7% ไว้แล้ว (ถอด VAT)'}
+              {vatMode === 'NO_VAT' && 'ไม่มีการคิดภาษีมูลค่าเพิ่ม (0%)'}
+            </p>
+          </div>
+
           {/* Right: Financial Totals Box */}
-          <div className="w-full sm:w-72 bg-slate-50/90 print:bg-transparent rounded border border-slate-200 print:border-black p-2.5 text-xs space-y-1">
+          <div className="w-full sm:w-80 bg-slate-50/90 print:bg-transparent rounded border border-slate-200 print:border-black p-3 text-xs sm:text-sm space-y-1.5 ml-auto">
             {/* Case 1: NO_VAT */}
             {vatMode === 'NO_VAT' && (
               <>
                 <div className="flex justify-between items-center text-slate-700">
-                  <span className="font-medium">รวมเป็นเงิน (SUBTOTAL):</span>
-                  <span className="font-mono">{fmt(calcResult.subtotal)}</span>
+                  <span className="font-semibold">รวมเป็นเงิน (SUBTOTAL):</span>
+                  <span className="font-mono font-semibold">{fmt(calcResult.subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                <div className="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
                   <span>ภาษีมูลค่าเพิ่ม (VAT 0%):</span>
-                  <span className="font-mono">0.00</span>
+                  <span className="font-mono font-semibold">0.00</span>
                 </div>
-                <div className="border-t-2 border-orange-500 print:border-black pt-1 mt-1 flex justify-between items-center text-sm font-bold text-slate-900">
+                <div className="border-t-2 border-orange-500 print:border-black pt-1.5 mt-1.5 flex justify-between items-center text-sm sm:text-base font-bold text-slate-900">
                   <span>ยอดรวมสุทธิ (TOTAL):</span>
-                  <span className="font-mono text-orange-600 print:text-black">
+                  <span className="font-mono text-base sm:text-lg font-bold text-orange-600 print:text-black">
                     {fmt(calcResult.netTotal)} บาท
                   </span>
                 </div>
@@ -711,16 +794,16 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
             {vatMode === 'ADD_VAT' && (
               <>
                 <div className="flex justify-between items-center text-slate-700">
-                  <span className="font-medium">รวมเป็นเงิน (SUBTOTAL):</span>
-                  <span className="font-mono">{fmt(calcResult.subtotal)}</span>
+                  <span className="font-semibold">รวมเป็นเงิน (SUBTOTAL):</span>
+                  <span className="font-mono font-semibold">{fmt(calcResult.subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-orange-700 print:text-black">
-                  <span className="font-medium">ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
-                  <span className="font-mono font-semibold">+{fmt(calcResult.vatAmount)}</span>
+                <div className="flex justify-between items-center text-orange-700 print:text-black font-medium">
+                  <span className="font-semibold">ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
+                  <span className="font-mono font-bold">+{fmt(calcResult.vatAmount)}</span>
                 </div>
-                <div className="border-t-2 border-orange-500 print:border-black pt-1 mt-1 flex justify-between items-center text-sm font-bold text-slate-900">
+                <div className="border-t-2 border-orange-500 print:border-black pt-1.5 mt-1.5 flex justify-between items-center text-sm sm:text-base font-bold text-slate-900">
                   <span>ยอดรวมสุทธิ (TOTAL):</span>
-                  <span className="font-mono text-orange-600 print:text-black">
+                  <span className="font-mono text-base sm:text-lg font-bold text-orange-600 print:text-black">
                     {fmt(calcResult.netTotal)} บาท
                   </span>
                 </div>
@@ -731,20 +814,20 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
             {vatMode === 'INC_VAT' && (
               <>
                 <div className="flex justify-between items-center text-slate-700">
-                  <span className="font-medium">ราคารวมภาษีแล้ว:</span>
-                  <span className="font-mono">{fmt(calcResult.subtotal)}</span>
+                  <span className="font-semibold">ราคารวมภาษีแล้ว:</span>
+                  <span className="font-mono font-semibold">{fmt(calcResult.subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-600 text-[11px]">
+                <div className="flex justify-between items-center text-slate-600 text-xs sm:text-sm">
                   <span>ราคาก่อนภาษี (PRE-TAX):</span>
-                  <span className="font-mono">{fmt(calcResult.preTaxSubtotal)}</span>
+                  <span className="font-mono font-semibold">{fmt(calcResult.preTaxSubtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-emerald-700 print:text-black">
-                  <span className="font-medium">ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
-                  <span className="font-mono font-semibold">{fmt(calcResult.vatAmount)}</span>
+                <div className="flex justify-between items-center text-emerald-700 print:text-black font-medium">
+                  <span className="font-semibold">ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
+                  <span className="font-mono font-bold">{fmt(calcResult.vatAmount)}</span>
                 </div>
-                <div className="border-t-2 border-orange-500 print:border-black pt-1 mt-1 flex justify-between items-center text-sm font-bold text-slate-900">
+                <div className="border-t-2 border-orange-500 print:border-black pt-1.5 mt-1.5 flex justify-between items-center text-sm sm:text-base font-bold text-slate-900">
                   <span>ยอดรวมสุทธิ (TOTAL):</span>
-                  <span className="font-mono text-orange-600 print:text-black">
+                  <span className="font-mono text-base sm:text-lg font-bold text-orange-600 print:text-black">
                     {fmt(calcResult.netTotal)} บาท
                   </span>
                 </div>
@@ -755,59 +838,87 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* SECTION 7: SIGNATURES FOOTER                                              */}
+      {/* SECTION 7: SIGNATURES FOOTER (ขยายพื้นที่เซ็นต์ชื่อ & ขยับหัวข้อขึ้นบน)        */}
       {/* ========================================================================= */}
       <footer className="pt-2 border-t-2 border-orange-500 print:border-black mt-2">
-        <div className="grid grid-cols-2 gap-6 text-center text-xs">
-          {/* Left: Receiver Signature */}
-          <div className="flex flex-col items-center">
-            <div className="font-semibold text-slate-800 mb-6">ผู้รับสินค้า / บริการ (RECEIVER)</div>
-            <div className="w-52 border-b border-dashed border-slate-400 mb-1.5" />
-            <div className="flex items-center justify-center gap-1 w-52 mb-1">
-              <span className="text-slate-500 text-[11px]">ลงชื่อ:</span>
-              <input
-                type="text"
-                value={meta.receiverName}
-                onChange={(e) => updateMeta('receiverName', e.target.value)}
-                placeholder="(......................................................)"
-                className="text-center font-medium text-slate-800 focus:bg-orange-50/50 rounded px-1 border-transparent focus:border-orange-300 focus:outline-none w-full text-xs"
-              />
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 text-center text-xs sm:text-sm">
+          {/* Left: Receiver Signature (ผู้รับสินค้า / บริการ) */}
+          <div className="flex flex-col items-center justify-between border border-slate-200 print:border-slate-400 rounded-lg p-2.5 bg-slate-50/40 print:bg-transparent min-h-[175px] print:min-h-[185px]">
+            {/* หัวข้อ ขยับขึ้นมาด้านบนสุด */}
+            <div className="font-bold text-slate-900 text-xs sm:text-sm border-b border-slate-200 print:border-slate-300 pb-1 w-full text-center tracking-wide">
+              ผู้รับสินค้า / บริการ (RECEIVER)
             </div>
-            <div className="flex items-center justify-center gap-1 w-52 text-[11px] text-slate-500">
-              <span>วันที่:</span>
-              <input
-                type="text"
-                value={meta.receiverDate}
-                onChange={(e) => updateMeta('receiverDate', e.target.value)}
-                placeholder="วันที่รับสินค้า"
-                className="text-center font-medium text-slate-700 focus:bg-orange-50/50 rounded px-1 border-transparent focus:border-orange-300 focus:outline-none w-32 text-xs"
-              />
+
+            {/* พื้นที่ว่างสำหรับเซ็นต์ชื่อ / ประทับตรา ขยายพื้นที่ให้กว้างขวาง เซ็นต์สะดวก */}
+            <div className="w-full flex-1 min-h-[70px] sm:min-h-[85px] print:min-h-[85px] flex items-center justify-center">
+              <span className="no-print text-slate-300 text-[11px] sm:text-xs select-none tracking-widest">
+                (พื้นที่ลงลายมือชื่อ / ประทับตรา)
+              </span>
+            </div>
+
+            {/* เส้นประ และข้อมูลลงชื่อตัวบรรจง */}
+            <div className="w-full flex flex-col items-center">
+              <div className="w-56 sm:w-64 border-b border-dashed border-slate-400 mb-1.5" />
+              <div className="flex items-center justify-center gap-1.5 w-56 sm:w-64 mb-1">
+                <span className="text-slate-600 font-semibold text-xs sm:text-sm shrink-0">ลงชื่อ:</span>
+                <input
+                  type="text"
+                  value={meta.receiverName}
+                  onChange={(e) => updateMeta('receiverName', e.target.value)}
+                  placeholder="(......................................................)"
+                  className="text-center font-medium text-slate-800 focus:bg-orange-50/50 rounded px-1.5 border-transparent focus:border-orange-300 focus:outline-none w-full text-xs sm:text-sm"
+                />
+              </div>
+              <div className="flex items-center justify-center gap-1.5 w-56 sm:w-64 text-xs sm:text-sm text-slate-600">
+                <span className="font-semibold shrink-0">วันที่:</span>
+                <input
+                  type="text"
+                  value={meta.receiverDate}
+                  onChange={(e) => updateMeta('receiverDate', e.target.value)}
+                  placeholder="วันที่รับสินค้า"
+                  className="text-center font-medium text-slate-700 focus:bg-orange-50/50 rounded px-1.5 border-transparent focus:border-orange-300 focus:outline-none w-36 text-xs sm:text-sm"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Right: Cashier / Issuer Signature */}
-          <div className="flex flex-col items-center">
-            <div className="font-semibold text-slate-800 mb-6">ผู้รับเงิน / แคชเชียร์ (AUTHORIZED SIGNATURE)</div>
-            <div className="w-52 border-b border-dashed border-slate-400 mb-1.5" />
-            <div className="flex items-center justify-center gap-1 w-52 mb-1">
-              <span className="text-slate-500 text-[11px]">ลงชื่อ:</span>
-              <input
-                type="text"
-                value={meta.cashierName}
-                onChange={(e) => updateMeta('cashierName', e.target.value)}
-                placeholder="(......................................................)"
-                className="text-center font-medium text-slate-800 focus:bg-orange-50/50 rounded px-1 border-transparent focus:border-orange-300 focus:outline-none w-full text-xs"
-              />
+          {/* Right: Cashier / Issuer Signature (ผู้รับเงิน / แคชเชียร์) */}
+          <div className="flex flex-col items-center justify-between border border-slate-200 print:border-slate-400 rounded-lg p-2.5 bg-slate-50/40 print:bg-transparent min-h-[175px] print:min-h-[185px]">
+            {/* หัวข้อ ขยับขึ้นมาด้านบนสุด */}
+            <div className="font-bold text-slate-900 text-xs sm:text-sm border-b border-slate-200 print:border-slate-300 pb-1 w-full text-center tracking-wide">
+              ผู้รับเงิน / แคชเชียร์ (AUTHORIZED SIGNATURE)
             </div>
-            <div className="flex items-center justify-center gap-1 w-52 text-[11px] text-slate-500">
-              <span>วันที่:</span>
-              <input
-                type="text"
-                value={meta.cashierDate}
-                onChange={(e) => updateMeta('cashierDate', e.target.value)}
-                placeholder="วันที่รับเงิน"
-                className="text-center font-medium text-slate-700 focus:bg-orange-50/50 rounded px-1 border-transparent focus:border-orange-300 focus:outline-none w-32 text-xs"
-              />
+
+            {/* พื้นที่ว่างสำหรับเซ็นต์ชื่อ / ประทับตรา ขยายพื้นที่ให้กว้างขวาง เซ็นต์สะดวก */}
+            <div className="w-full flex-1 min-h-[70px] sm:min-h-[85px] print:min-h-[85px] flex items-center justify-center">
+              <span className="no-print text-slate-300 text-[11px] sm:text-xs select-none tracking-widest">
+                (พื้นที่ลงลายมือชื่อ / ประทับตรา)
+              </span>
+            </div>
+
+            {/* เส้นประ และข้อมูลลงชื่อตัวบรรจง */}
+            <div className="w-full flex flex-col items-center">
+              <div className="w-56 sm:w-64 border-b border-dashed border-slate-400 mb-1.5" />
+              <div className="flex items-center justify-center gap-1.5 w-56 sm:w-64 mb-1">
+                <span className="text-slate-600 font-semibold text-xs sm:text-sm shrink-0">ลงชื่อ:</span>
+                <input
+                  type="text"
+                  value={meta.cashierName}
+                  onChange={(e) => updateMeta('cashierName', e.target.value)}
+                  placeholder="(......................................................)"
+                  className="text-center font-medium text-slate-800 focus:bg-orange-50/50 rounded px-1.5 border-transparent focus:border-orange-300 focus:outline-none w-full text-xs sm:text-sm"
+                />
+              </div>
+              <div className="flex items-center justify-center gap-1.5 w-56 sm:w-64 text-xs sm:text-sm text-slate-600">
+                <span className="font-semibold shrink-0">วันที่:</span>
+                <input
+                  type="text"
+                  value={meta.cashierDate}
+                  onChange={(e) => updateMeta('cashierDate', e.target.value)}
+                  placeholder="วันที่รับเงิน"
+                  className="text-center font-medium text-slate-700 focus:bg-orange-50/50 rounded px-1.5 border-transparent focus:border-orange-300 focus:outline-none w-36 text-xs sm:text-sm"
+                />
+              </div>
             </div>
           </div>
         </div>

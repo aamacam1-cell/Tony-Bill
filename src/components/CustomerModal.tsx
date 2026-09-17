@@ -184,18 +184,18 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
       <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden my-6">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <Building2 className="w-5 h-5 text-orange-400" />
-            <h2 className="text-base font-bold">ฐานข้อมูลลูกค้า (Customer Database)</h2>
-            <span className="text-[11px] bg-orange-600/90 text-white px-2 py-0.5 rounded font-mono">
+            <h2 className="text-base sm:text-lg font-bold">ฐานข้อมูลลูกค้า (Customer Database)</h2>
+            <span className="text-xs bg-orange-600 text-white px-2.5 py-0.5 rounded-full font-mono font-semibold">
               {customers.length} รายการ
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-white rounded-md transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white rounded-md transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -205,22 +205,22 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
         <div className="p-5 space-y-4">
           {/* Top Actions: Search + Add New Button */}
           {!isAddingNew && !editingId && (
-            <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">
-              <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-between items-center">
+              <div className="relative w-full sm:w-88">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="ค้นหาด้วยชื่อเรียก, ชื่อบริษัท, เลขผู้เสียภาษี..."
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 focus:bg-white"
+                  className="w-full pl-10 pr-3.5 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-orange-500 focus:bg-white"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={handleStartAdd}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>เพิ่มลูกค้าใหม่ในฐานข้อมูล</span>
@@ -230,15 +230,15 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
           {/* Drag & Reorder Instruction Banner */}
           {!isAddingNew && !editingId && customers.length > 1 && (
-            <div className="flex items-center justify-between text-[11px] text-slate-600 bg-amber-50/70 border border-amber-200/80 px-3 py-1.5 rounded-lg">
-              <div className="flex items-center gap-1.5">
-                <GripVertical className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-700 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-lg">
+              <div className="flex items-center gap-2">
+                <GripVertical className="w-4 h-4 text-orange-600 shrink-0" />
                 <span>
                   <strong>การจัดเรียงลำดับ:</strong> กดเมาส์ซ้ายค้างที่ไอคอน ⠿ แล้วลากขึ้น-ลง หรือกดปุ่มลูกศร ▲ ▼ เพื่อสลับลำดับลูกค้า
                 </span>
               </div>
               {searchTerm && (
-                <span className="text-[10px] text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full font-bold">
                   ผลการค้นหา {filteredCustomers.length} จาก {customers.length}
                 </span>
               )}
@@ -247,28 +247,28 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
           {/* Form when adding or editing */}
           {(isAddingNew || editingId) && (
-            <form onSubmit={handleSave} className="bg-orange-50/40 rounded-xl p-4 border border-orange-200 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-orange-200">
-                <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <form onSubmit={handleSave} className="bg-orange-50/40 rounded-xl p-5 border border-orange-200 space-y-3.5">
+              <div className="flex items-center justify-between pb-2.5 border-b border-orange-200">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
                   <Tag className="w-4 h-4 text-orange-600" />
                   <span>{editingId ? 'แก้ไขข้อมูลลูกค้า' : 'บันทึกลูกค้าใหม่ลงฐานข้อมูล'}</span>
                 </h3>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-medium"
+                  className="text-xs sm:text-sm text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
                   ยกเลิก
                 </button>
               </div>
 
               {error && (
-                <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded-lg font-medium">
+                <div className="text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 p-2.5 rounded-lg font-medium">
                   {error}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs sm:text-sm">
                 {/* 1. ชื่อเรียก (ดัชนี) */}
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
@@ -280,9 +280,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={alias}
                     onChange={(e) => setAlias(e.target.value)}
                     placeholder="เช่น สยามฟู้ดส์, ซีพี ออลล์, มิตรภาพการค้า"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none font-semibold text-orange-700"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none font-semibold text-orange-700 text-xs sm:text-sm"
                   />
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-xs text-slate-500 block mt-0.5">
                     ชื่อสั้นๆ ที่จะแสดงในรายการ Dropdown เพื่อเลือกได้รวดเร็ว
                   </span>
                 </div>
@@ -298,13 +298,13 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="เช่น บริษัท สยาม ฟู้ดส์ แอนด์ เบเวอเรจ จำกัด"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
                   />
                 </div>
 
                 {/* 3. ผู้ติดต่อ */}
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">
+                  <label className="block font-semibold text-slate-700 mb-1">
                     ผู้ติดต่อ / แผนก (ถ้ามี)
                   </label>
                   <input
@@ -312,13 +312,13 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     placeholder="เช่น คุณวิภาวรรณ (ฝ่ายจัดซื้อ)"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
                   />
                 </div>
 
                 {/* 4. เบอร์โทรศัพท์ลูกค้า */}
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1 flex items-center gap-1">
+                  <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
                     <Phone className="w-3.5 h-3.5 text-orange-600" />
                     <span>เบอร์โทรศัพท์ลูกค้า</span>
                   </label>
@@ -327,13 +327,13 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="เช่น 02-123-4567, 081-234-5678"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
                   />
                 </div>
 
                 {/* 5. เลขประจำตัวผู้เสียภาษี */}
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">
+                  <label className="block font-semibold text-slate-700 mb-1">
                     เลขประจำตัวผู้เสียภาษี (13 หลัก)
                   </label>
                   <input
@@ -342,13 +342,13 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={taxId}
                     onChange={(e) => setTaxId(e.target.value.replace(/\D/g, ''))}
                     placeholder="เช่น 0105558091234"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md font-mono tracking-wider focus:border-orange-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md font-mono tracking-wider focus:border-orange-500 focus:outline-none text-xs sm:text-sm font-semibold"
                   />
                 </div>
 
                 {/* 6. สำนักงานใหญ่ / สาขา */}
                 <div>
-                  <label className="block font-medium text-slate-700 mb-1">
+                  <label className="block font-semibold text-slate-700 mb-1">
                     สำนักงานใหญ่ / รหัสสาขา
                   </label>
                   <input
@@ -356,7 +356,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={branch}
                     onChange={(e) => setBranch(e.target.value)}
                     placeholder="เช่น สำนักงานใหญ่ หรือ 00000"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
                   />
                 </div>
 
@@ -369,7 +369,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                   <select
                     value={vatType}
                     onChange={(e) => setVatType(e.target.value as VatMode)}
-                    className="w-full px-2.5 py-1.5 bg-white border border-orange-300 rounded-md font-medium text-slate-800 focus:border-orange-500 focus:outline-none"
+                    className="w-full px-3 py-2 bg-white border border-orange-300 rounded-md font-medium text-slate-800 focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
                   >
                     <option value="NO_VAT">1. ไม่คิด VAT (แสดง 0.00 ยอดตรงๆ)</option>
                     <option value="ADD_VAT">2. +VAT (ราคาในตารางยังไม่รวมภาษี +7%)</option>
@@ -379,7 +379,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                 {/* 7. ที่อยู่ (เต็มแถว) */}
                 <div className="sm:col-span-2">
-                  <label className="block font-medium text-slate-700 mb-1">
+                  <label className="block font-semibold text-slate-700 mb-1">
                     ที่อยู่ (เลขที่, ถนน, แขวง/ตำบล, เขต/อำเภอ, จังหวัด, รหัสไปรษณีย์)
                   </label>
                   <textarea
@@ -387,22 +387,22 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="เช่น 142/5 ถนนสาทรใต้ แขวงยานนาวา เขตสาทร กรุงเทพฯ 10120"
-                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none resize-none"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none resize-none text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-orange-200">
+              <div className="flex justify-end gap-2.5 pt-2.5 border-t border-orange-200">
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-3 py-1.5 text-xs text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 text-xs sm:text-sm text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors font-medium cursor-pointer"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-md shadow-xs transition-colors"
+                  className="px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-md shadow-xs transition-colors cursor-pointer"
                 >
                   {editingId ? 'บันทึกการแก้ไข' : 'บันทึกลงฐานข้อมูล'}
                 </button>
@@ -411,22 +411,22 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
           )}
 
           {/* Customer list table */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden max-h-[380px] overflow-y-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-100/80 text-slate-700 sticky top-0 font-semibold border-b border-slate-200">
+          <div className="border border-slate-200 rounded-xl overflow-hidden max-h-[420px] overflow-y-auto">
+            <table className="w-full text-xs sm:text-sm text-left">
+              <thead className="bg-slate-100/90 text-slate-800 sticky top-0 font-bold border-b border-slate-200">
                 <tr>
-                  <th className="py-2 px-2 text-center w-28 whitespace-nowrap">ลำดับ / สลับที่</th>
-                  <th className="py-2 px-3">ชื่อเรียก (ดัชนี)</th>
-                  <th className="py-2 px-3">ชื่อบริษัท & ที่อยู่</th>
-                  <th className="py-2 px-3">เลขประจำตัวผู้เสียภาษี</th>
-                  <th className="py-2 px-3">ประเภท VAT</th>
-                  <th className="py-2 px-3 text-center">จัดการ</th>
+                  <th className="py-2.5 px-2 text-center w-32 whitespace-nowrap">ลำดับ / สลับที่</th>
+                  <th className="py-2.5 px-3">ชื่อเรียก (ดัชนี)</th>
+                  <th className="py-2.5 px-3">ชื่อบริษัท & ที่อยู่</th>
+                  <th className="py-2.5 px-3">เลขประจำตัวผู้เสียภาษี</th>
+                  <th className="py-2.5 px-3">ประเภท VAT</th>
+                  <th className="py-2.5 px-3 text-center">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={6} className="py-8 text-center text-slate-500 font-medium">
                       ไม่พบข้อมูลลูกค้า (กดปุ่ม "เพิ่มลูกค้าใหม่" ด้านบนเพื่อบันทึก)
                     </td>
                   </tr>
@@ -470,16 +470,16 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                             : isDragOver
                             ? 'bg-orange-100/80 ring-2 ring-orange-500 ring-inset'
                             : isSelected
-                            ? 'bg-orange-50/70 font-medium hover:bg-orange-50'
+                            ? 'bg-orange-50/80 font-medium hover:bg-orange-50'
                             : 'hover:bg-orange-50/40'
                         }`}
                       >
                         {/* 1. Reorder Column: Drag Handle, Up/Down Buttons, Sequence No */}
                         <td className="py-2.5 px-2 text-center">
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center gap-1.5">
                             {/* Drag handle (click & hold left mouse button) */}
                             <div
-                              className="cursor-grab active:cursor-grabbing p-1 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                              className="cursor-grab active:cursor-grabbing p-1.5 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
                               title="กดเมาส์ซ้ายค้างไว้แล้วเลื่อนขึ้น-ลงเพื่อสลับลำดับ"
                             >
                               <GripVertical className="w-4 h-4" />
@@ -494,10 +494,10 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                                   handleMoveUp(index);
                                 }}
                                 disabled={index === 0 || editingId !== null || isAddingNew}
-                                className="p-0.5 text-slate-400 hover:text-orange-600 hover:bg-orange-100 disabled:opacity-20 disabled:hover:bg-transparent rounded transition-colors cursor-pointer"
+                                className="p-0.5 text-slate-500 hover:text-orange-600 hover:bg-orange-100 disabled:opacity-20 disabled:hover:bg-transparent rounded transition-colors cursor-pointer"
                                 title="กดเพื่อเลื่อนขึ้น 1 ลำดับ"
                               >
-                                <ChevronUp className="w-3.5 h-3.5" />
+                                <ChevronUp className="w-4 h-4" />
                               </button>
                               <button
                                 type="button"
@@ -510,15 +510,15 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                                   editingId !== null ||
                                   isAddingNew
                                 }
-                                className="p-0.5 text-slate-400 hover:text-orange-600 hover:bg-orange-100 disabled:opacity-20 disabled:hover:bg-transparent rounded transition-colors cursor-pointer"
+                                className="p-0.5 text-slate-500 hover:text-orange-600 hover:bg-orange-100 disabled:opacity-20 disabled:hover:bg-transparent rounded transition-colors cursor-pointer"
                                 title="กดเพื่อเลื่อนลง 1 ลำดับ"
                               >
-                                <ChevronDown className="w-3.5 h-3.5" />
+                                <ChevronDown className="w-4 h-4" />
                               </button>
                             </div>
 
                             {/* Sequential order label */}
-                            <span className="text-[11px] font-mono text-slate-500 font-semibold w-5 text-right">
+                            <span className="text-xs sm:text-sm font-mono text-slate-600 font-bold w-6 text-right">
                               #{index + 1}
                             </span>
                           </div>
@@ -526,11 +526,11 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                         <td className="py-2.5 px-3">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-orange-700 bg-orange-100/70 px-2 py-0.5 rounded">
+                            <span className="font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded text-xs sm:text-sm">
                               {cust.alias}
                             </span>
                             {isSelected && (
-                              <span className="text-[10px] text-emerald-600 font-semibold">
+                              <span className="text-xs text-emerald-600 font-bold">
                                 (กำลังใช้)
                               </span>
                             )}
@@ -538,22 +538,22 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                         </td>
 
                         <td className="py-2.5 px-3">
-                          <div className="font-semibold text-slate-900">{cust.companyName}</div>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 mt-0.5">
+                          <div className="font-bold text-slate-900 text-xs sm:text-sm">{cust.companyName}</div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-600 mt-0.5">
                             {cust.contact && (
                               <span>
-                                ติดต่อ: <strong className="text-slate-700">{cust.contact}</strong>
+                                ติดต่อ: <strong className="text-slate-800">{cust.contact}</strong>
                               </span>
                             )}
                             {cust.phone && (
-                              <span className="flex items-center gap-0.5 text-slate-600">
-                                <Phone className="w-2.5 h-2.5 text-orange-600" />
+                              <span className="flex items-center gap-1 text-slate-700 font-medium">
+                                <Phone className="w-3 h-3 text-orange-600" />
                                 <span>{cust.phone}</span>
                               </span>
                             )}
                           </div>
                           <div
-                            className="text-[11px] text-slate-500 truncate max-w-xs mt-0.5"
+                            className="text-xs text-slate-500 truncate max-w-xs mt-0.5"
                             title={cust.address}
                           >
                             {cust.address}
@@ -561,15 +561,15 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                         </td>
 
                         <td className="py-2.5 px-3">
-                          <div className="font-mono text-slate-700">{cust.taxId || '-'}</div>
-                          <div className="text-[10px] text-slate-500">
+                          <div className="font-mono font-medium text-slate-800 text-xs sm:text-sm">{cust.taxId || '-'}</div>
+                          <div className="text-xs text-slate-500 font-medium">
                             สาขา: {cust.branch || 'สำนักงานใหญ่'}
                           </div>
                         </td>
 
                         <td className="py-2.5 px-3">
                           <span
-                            className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded ${
+                            className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded ${
                               cust.vatType === 'NO_VAT'
                                 ? 'bg-slate-100 text-slate-700'
                                 : cust.vatType === 'ADD_VAT'
@@ -583,14 +583,14 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                         <td className="py-2.5 px-3 text-center">
                           {confirmDeleteId === cust.id ? (
-                            <div className="inline-flex items-center gap-1 bg-red-50 p-1 rounded border border-red-200 shadow-2xs">
-                              <span className="text-[10px] text-red-700 font-bold whitespace-nowrap">
+                            <div className="inline-flex items-center gap-1.5 bg-red-50 p-1.5 rounded border border-red-200 shadow-2xs">
+                              <span className="text-xs text-red-700 font-bold whitespace-nowrap">
                                 ลบ?
                               </span>
                               <button
                                 type="button"
                                 onClick={() => handleDelete(cust.id)}
-                                className="px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold cursor-pointer transition-colors"
+                                className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold cursor-pointer transition-colors"
                                 title="ยืนยันการลบออกจากฐานข้อมูล"
                               >
                                 ยืนยัน
@@ -598,21 +598,21 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteId(null)}
-                                className="px-1.5 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[10px] cursor-pointer transition-colors"
+                                className="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs cursor-pointer transition-colors font-medium"
                                 title="ยกเลิก"
                               >
                                 ยกเลิก
                               </button>
                             </div>
                           ) : (
-                            <div className="inline-flex items-center gap-1">
+                            <div className="inline-flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => {
                                   onSelectCustomer(cust);
                                   onClose();
                                 }}
-                                className="px-2 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded text-[11px] font-semibold transition-colors shadow-2xs cursor-pointer"
+                                className="px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded text-xs font-bold transition-colors shadow-2xs cursor-pointer"
                                 title="เลือกใส่ในหัวบิลทันที"
                               >
                                 เลือก
@@ -620,18 +620,18 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleStartEdit(cust)}
-                                className="p-1 text-slate-500 hover:text-orange-600 rounded transition-colors cursor-pointer"
+                                className="p-1.5 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors cursor-pointer"
                                 title="แก้ไขข้อมูล"
                               >
-                                <Edit2 className="w-3.5 h-3.5" />
+                                <Edit2 className="w-4 h-4" />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setConfirmDeleteId(cust.id)}
-                                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
                                 title="ลบออกจากฐานข้อมูล"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           )}
@@ -646,14 +646,14 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-600">
           <div>
             💾 ข้อมูลถูกจัดเก็บอย่างปลอดภัยใน Local Storage ของบราวเซอร์ในเครื่องนี้
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-medium transition-colors cursor-pointer"
+            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg font-semibold transition-colors cursor-pointer"
           >
             ปิดหน้าต่าง
           </button>

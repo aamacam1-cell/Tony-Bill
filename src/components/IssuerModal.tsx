@@ -54,38 +54,38 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
       <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden my-6">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <Store className="w-5 h-5 text-orange-400" />
-            <h2 className="text-base font-bold">แก้ไขข้อมูลร้านค้า / ผู้ออกใบกำกับภาษี</h2>
+            <h2 className="text-base sm:text-lg font-bold">แก้ไขข้อมูลร้านค้า / ผู้ออกใบกำกับภาษี</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white rounded-lg p-1 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white rounded-lg p-1.5 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Content */}
-        <div className="p-5 space-y-4 text-xs">
+        <div className="p-5 space-y-4 text-xs sm:text-sm">
           {savedSuccess && (
-            <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg flex items-center gap-2 font-medium">
+            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg flex items-center gap-2 font-medium text-xs sm:text-sm">
               <Check className="w-4 h-4 text-emerald-600" />
               <span>บันทึกข้อมูลร้านค้าเรียบร้อยแล้ว</span>
             </div>
           )}
 
           {/* Logo & Store Name */}
-          <div className="flex items-center gap-4 p-3 bg-orange-50/50 rounded-xl border border-orange-200">
-            <div className="flex flex-col items-center gap-1">
+          <div className="flex items-center gap-4 p-4 bg-orange-50/50 rounded-xl border border-orange-200">
+            <div className="flex flex-col items-center gap-1.5">
               <LogoUploader
                 compact={false}
                 logoUrl={formData.logoUrl}
                 onChange={(url) => handleChange('logoUrl', url)}
               />
-              <span className="text-[10px] text-slate-500 font-medium">โลโก้ร้าน</span>
+              <span className="text-xs text-slate-500 font-medium">โลโก้ร้าน</span>
             </div>
             <div className="flex-1 space-y-2">
               <div>
@@ -97,7 +97,7 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
                   placeholder="เช่น บริษัท ทีเค กราฟิก แอนด์ พริ้นติ้ง จำกัด"
-                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none font-semibold text-slate-900"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none font-bold text-slate-900 text-xs sm:text-sm"
                 />
               </div>
             </div>
@@ -105,8 +105,8 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
 
           {/* Address */}
           <div>
-            <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-orange-600" />
+            <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-orange-600" />
               <span>ที่อยู่บริษัทผู้ออกใบ <span className="text-red-500">*</span></span>
             </label>
             <textarea
@@ -114,15 +114,15 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
               value={formData.address}
               onChange={(e) => handleChange('address', e.target.value)}
               placeholder="เลขที่, ถนน, แขวง/ตำบล, เขต/อำเภอ, จังหวัด, รหัสไปรษณีย์"
-              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none resize-none"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none resize-none text-xs sm:text-sm"
             />
           </div>
 
           {/* Phone & Social */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5 text-orange-600" />
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Phone className="w-4 h-4 text-orange-600" />
                 <span>เบอร์โทรศัพท์</span>
               </label>
               <input
@@ -130,13 +130,13 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 placeholder="เช่น 02-719-8999, 089-123-4567"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
               />
             </div>
 
             <div>
-              <label className="block font-medium text-slate-700 mb-1 flex items-center gap-1">
-                <Share2 className="w-3.5 h-3.5 text-orange-600" />
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Share2 className="w-4 h-4 text-orange-600" />
                 <span>Facebook / Line / เว็บไซต์</span>
               </label>
               <input
@@ -144,16 +144,16 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
                 value={formData.facebook}
                 onChange={(e) => handleChange('facebook', e.target.value)}
                 placeholder="เช่น TK Printing & Design"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
               />
             </div>
           </div>
 
           {/* Tax ID & Branch */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-orange-600" />
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-orange-600" />
                 <span>เลขประจำตัวผู้เสียภาษี (13 หลัก)</span>
               </label>
               <input
@@ -162,7 +162,7 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
                 value={formData.taxId}
                 onChange={(e) => handleChange('taxId', e.target.value.replace(/\D/g, ''))}
                 placeholder="เช่น 0105562014892"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md font-mono tracking-wider focus:border-orange-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md font-mono tracking-wider focus:border-orange-500 focus:outline-none text-xs sm:text-sm font-semibold"
               />
             </div>
 
@@ -175,37 +175,37 @@ export const IssuerModal: React.FC<IssuerModalProps> = ({
                 value={formData.branch}
                 onChange={(e) => handleChange('branch', e.target.value)}
                 placeholder="เช่น สำนักงานใหญ่ หรือ 00000"
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-orange-500 focus:outline-none text-xs sm:text-sm"
               />
             </div>
           </div>
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div className="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer"
           >
             ยกเลิก
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => handleSave(true)}
-              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
               title="บันทึกข้อมูลและใช้เป็นค่าเริ่มต้นสำหรับเอกสารในอนาคต"
             >
-              <Save className="w-3.5 h-3.5 text-orange-400" />
+              <Save className="w-4 h-4 text-orange-400" />
               <span>บันทึก & จำเป็นค่าเริ่มต้น</span>
             </button>
             <button
               type="button"
               onClick={() => handleSave(false)}
-              className="px-4 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
             >
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-4 h-4" />
               <span>บันทึกข้อมูลร้าน</span>
             </button>
           </div>
