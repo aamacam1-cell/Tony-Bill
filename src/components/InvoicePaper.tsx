@@ -219,10 +219,10 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
           </div>
 
           {/* Under Header: Compact Meta Fields Grid (เลขที่, วันที่, PO, ผู้ติดต่อ) */}
-          <div className="mt-2 pt-2 border-t border-dashed border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
-            {/* เลขที่ใบกำกับ */}
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
+          <div className="mt-2 pt-2 border-t border-dashed border-slate-200 grid grid-cols-2 sm:grid-cols-[1.2fr_1.15fr_0.8fr_0.85fr] gap-2 text-xs sm:text-sm">
+            {/* เลขที่ใบกำกับ: ปรับขนาดตัวอักษรและระยะเว้นวรรคให้ตัวเลขทุกหลักแสดงครบถ้วน ไม่ตกขอบ */}
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm shrink-0">
                 เลขที่:
               </span>
               <div className="flex items-center gap-0.5 flex-1 min-w-0">
@@ -231,52 +231,54 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                   value={meta.invoiceNo}
                   onChange={(e) => updateMeta('invoiceNo', e.target.value)}
                   placeholder="เช่น TK69 021"
-                  className="font-bold text-orange-600 print:text-black px-2 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-sm sm:text-base font-mono"
+                  title={meta.invoiceNo}
+                  className="font-bold text-orange-600 print:text-black px-1.5 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full min-w-0 focus:outline-none text-xs sm:text-[13px] font-mono tracking-tight"
                 />
                 <button
                   type="button"
                   onClick={onIncrementInvoiceNo || onRegenerateInvoiceNo}
-                  className="no-print p-1 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                  className="no-print p-0.5 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
                   title="เพิ่มเลขที่บิลถัดไป (+1)"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                 </button>
                 {onOpenInvoiceNoSettings && (
                   <button
                     type="button"
                     onClick={onOpenInvoiceNoSettings}
-                    className="no-print p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
                     title="ตั้งค่าเลขที่เริ่มต้น"
                   >
-                    <Settings className="w-3.5 h-3.5" />
+                    <Settings className="w-3 h-3" />
                   </button>
                 )}
                 {!onOpenInvoiceNoSettings && (
                   <button
                     type="button"
                     onClick={onRegenerateInvoiceNo}
-                    className="no-print p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
                     title="สร้างเลขที่ใบกำกับอัตโนมัติ"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
+                    <RefreshCw className="w-3 h-3" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* วันที่เอกสาร */}
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
+            {/* วันที่เอกสาร: ปรับขนาดตัวอักษรและล็อกบรรทัดเดียว ไม่ขึ้นบรรทัดใหม่ */}
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm shrink-0">
                 วันที่:
               </span>
               <div className="relative flex-1 min-w-0">
                 <button
                   type="button"
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="w-full text-left font-medium text-slate-800 bg-white print:bg-transparent px-2 py-1 rounded border border-slate-200 focus:border-orange-400 flex items-center justify-between text-xs sm:text-sm cursor-pointer"
+                  className="w-full text-left font-medium text-slate-800 bg-white print:bg-transparent px-1.5 py-1 rounded border border-slate-200 focus:border-orange-400 flex items-center justify-between text-xs sm:text-xs cursor-pointer min-w-0"
+                  title="คลิกเพื่อเลือกวันที่"
                 >
-                  <span>{formatThaiDate(meta.docDate)}</span>
-                  <Calendar className="w-3.5 h-3.5 text-orange-600 no-print shrink-0 ml-1" />
+                  <span className="whitespace-nowrap truncate">{formatThaiDate(meta.docDate)}</span>
+                  <Calendar className="w-3 h-3 text-orange-600 no-print shrink-0 ml-0.5" />
                 </button>
                 {showDatePicker && (
                   <div className="no-print absolute z-20 top-full mt-1 bg-white p-2 rounded-lg shadow-xl border border-slate-200">
@@ -295,8 +297,8 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
             </div>
 
             {/* เลขที่ PO */}
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm shrink-0">
                 เลขที่ PO:
               </span>
               <input
@@ -304,13 +306,13 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 value={meta.poNo}
                 onChange={(e) => updateMeta('poNo', e.target.value)}
                 placeholder="ระบุถ้ามี"
-                className="px-2 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs sm:text-sm"
+                className="px-1.5 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full min-w-0 focus:outline-none text-xs sm:text-xs"
               />
             </div>
 
             {/* ผู้ติดต่อ (เปลี่ยนจากชื่องาน) */}
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm shrink-0">
                 ผู้ติดต่อ:
               </span>
               <input
@@ -318,7 +320,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 value={meta.jobName}
                 onChange={(e) => updateMeta('jobName', e.target.value)}
                 placeholder="ระบุผู้ติดต่อ"
-                className="px-2 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full focus:outline-none text-xs sm:text-sm truncate"
+                className="px-1.5 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full min-w-0 focus:outline-none text-xs sm:text-xs truncate"
               />
             </div>
           </div>
