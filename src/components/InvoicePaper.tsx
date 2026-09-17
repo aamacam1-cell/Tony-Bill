@@ -99,9 +99,19 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
     onIssuerChange({ ...issuer, [field]: val });
   };
 
-  // Helper to update meta
+  // Helper to update meta: เมื่อผู้ใช้เลือก docDate จะอัปเดต receiverDate และ cashierDate ให้เป็นวันเดียวกันอัตโนมัติ
   const updateMeta = (field: keyof InvoiceMeta, val: string) => {
-    onMetaChange({ ...meta, [field]: val });
+    if (field === 'docDate') {
+      const formattedDate = formatThaiDate(val);
+      onMetaChange({
+        ...meta,
+        docDate: val,
+        receiverDate: formattedDate,
+        cashierDate: formattedDate,
+      });
+    } else {
+      onMetaChange({ ...meta, [field]: val });
+    }
   };
 
   // Add new item row (เริ่มแถวใหม่เป็นค่าว่าง ไม่มี 0.00)
@@ -875,7 +885,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 <span className="font-semibold shrink-0">วันที่:</span>
                 <input
                   type="text"
-                  value={meta.receiverDate}
+                  value={meta.receiverDate || (meta.docDate ? formatThaiDate(meta.docDate) : '')}
                   onChange={(e) => updateMeta('receiverDate', e.target.value)}
                   placeholder="วันที่รับสินค้า"
                   className="text-center font-medium text-slate-700 focus:bg-orange-50/50 rounded px-1.5 border-transparent focus:border-orange-300 focus:outline-none w-36 text-xs sm:text-sm"
@@ -915,7 +925,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 <span className="font-semibold shrink-0">วันที่:</span>
                 <input
                   type="text"
-                  value={meta.cashierDate}
+                  value={meta.cashierDate || (meta.docDate ? formatThaiDate(meta.docDate) : '')}
                   onChange={(e) => updateMeta('cashierDate', e.target.value)}
                   placeholder="วันที่รับเงิน"
                   className="text-center font-medium text-slate-700 focus:bg-orange-50/50 rounded px-1.5 border-transparent focus:border-orange-300 focus:outline-none w-36 text-xs sm:text-sm"

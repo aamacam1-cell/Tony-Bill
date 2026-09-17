@@ -310,12 +310,17 @@ export default function App() {
       },
     ]);
 
-    // เคลียร์เฉพาะผู้รับสินค้า แต่คงเลขที่ใบกำกับ, วันที่, และชื่อผู้รับเงิน/แคชเชียร์ไว้ครบถ้วน
-    setMeta((prevMeta) => ({
-      ...prevMeta,
-      invoiceNo: keptInvoiceNo,
-      receiverName: '',
-    }));
+    // เคลียร์เฉพาะผู้รับสินค้า แต่คงเลขที่ใบกำกับ, วันที่, และชื่อผู้รับเงิน/แคชเชียร์ไว้ครบถ้วน (โดยวันที่ด้านล่างตรงกับวันที่เอกสาร)
+    setMeta((prevMeta) => {
+      const docDateFormatted = formatThaiDate(prevMeta.docDate || todayISO);
+      return {
+        ...prevMeta,
+        invoiceNo: keptInvoiceNo,
+        receiverName: '',
+        receiverDate: docDateFormatted,
+        cashierDate: docDateFormatted,
+      };
+    });
   };
 
   const handleUndoReset = () => {
