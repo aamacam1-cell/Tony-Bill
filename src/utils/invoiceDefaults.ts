@@ -27,11 +27,22 @@ export const DEFAULT_ISSUER: IssuerInfo = {
   logoUrl: DEFAULT_LOGO_SVG,
 };
 
-export const INITIAL_CUSTOMER: CustomerInfo = {
+export const SAMPLE_CUSTOMER: CustomerInfo = {
   name: 'บริษัท สยาม ฟู้ดส์ แอนด์ เบเวอเรจ จำกัด',
   contact: 'คุณวิภาวรรณ ศิริชัยพาณิชย์ (แผนกจัดซื้อ)',
   address: '142/5 ถนนสาทรใต้ แขวงยานนาวา เขตสาทร กรุงเทพฯ 10120',
   taxId: '0105558091234',
+  branch: 'สำนักงานใหญ่',
+  deliveryDate: getTodayISODate(),
+};
+
+export const INITIAL_CUSTOMER: CustomerInfo = {
+  alias: '',
+  name: '',
+  contact: '',
+  phone: '',
+  address: '',
+  taxId: '',
   branch: 'สำนักงานใหญ่',
   deliveryDate: getTodayISODate(),
 };
@@ -45,14 +56,24 @@ export function generateInvoiceNumber(sequence = 21): string {
 export const INITIAL_META: InvoiceMeta = {
   docType: 'ORIGINAL',
   invoiceNo: generateInvoiceNumber(21),
-  poNo: 'PO-2569/0812',
-  jobName: 'งานพิมพ์ฉลากสินค้าและสติ๊กเกอร์บรรจุภัณฑ์',
+  poNo: '',
+  jobName: '',
   docDate: getTodayISODate(),
   receiverName: '',
   receiverDate: formatThaiDate(getTodayISODate()),
   cashierName: 'สมใจ จิตรเพียร',
   cashierDate: formatThaiDate(getTodayISODate()),
 };
+
+export const INITIAL_ITEMS: InvoiceItem[] = [
+  {
+    id: '1',
+    description: '',
+    quantity: 0,
+    unitPrice: 0,
+    amount: 0,
+  },
+];
 
 export const SAMPLE_ITEMS: InvoiceItem[] = [
   {
@@ -89,6 +110,26 @@ const LOCAL_STORAGE_ISSUER_KEY = 'tk_invoice_default_issuer_v1';
 const LOCAL_STORAGE_COUNTER_KEY = 'tk_invoice_counter_v1';
 export const LOCAL_STORAGE_INVOICE_SETTINGS_KEY = 'tk_invoice_number_settings_v1';
 export const LOCAL_STORAGE_LAST_SAVED_PRINTED_KEY = 'tk_invoice_last_saved_or_printed_v1';
+export const LOCAL_STORAGE_LAST_USER_INVOICE_NO_KEY = 'tk_invoice_last_user_invoice_no_v1';
+
+export function getLastUserInvoiceNo(): string | null {
+  try {
+    const val = localStorage.getItem(LOCAL_STORAGE_LAST_USER_INVOICE_NO_KEY);
+    return val && val.trim() ? val.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastUserInvoiceNo(invoiceNo: string): void {
+  try {
+    if (invoiceNo && invoiceNo.trim()) {
+      localStorage.setItem(LOCAL_STORAGE_LAST_USER_INVOICE_NO_KEY, invoiceNo.trim());
+    }
+  } catch {
+    // ignore
+  }
+}
 
 export interface InvoiceNumberSettings {
   prefix: string; // e.g. "TK"
@@ -140,6 +181,14 @@ export function formatInvoiceNumberFromSettings(settings: InvoiceNumberSettings,
 }
 
 export function getDefaultInvoiceNumber(): string {
+  const lastUserNo = getLastUserInvoiceNo();
+  if (lastUserNo) {
+    return lastUserNo;
+  }
+  const lastSavedOrPrinted = getLastSavedOrPrintedInvoiceNo();
+  if (lastSavedOrPrinted) {
+    return lastSavedOrPrinted;
+  }
   const settings = loadInvoiceNumberSettings();
   return formatInvoiceNumberFromSettings(settings);
 }

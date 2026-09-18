@@ -234,7 +234,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
 
           {/* Under Header: Compact Meta Fields Grid (เลขที่, วันที่, PO, ผู้ติดต่อ) */}
           <div className="mt-2 pt-2 border-t border-dashed border-slate-200 grid grid-cols-2 sm:grid-cols-[1.2fr_1.15fr_0.8fr_0.85fr] gap-2 text-xs sm:text-sm">
-            {/* เลขที่ใบกำกับ: ปรับขนาดตัวอักษรและระยะเว้นวรรคให้ตัวเลขทุกหลักแสดงครบถ้วน ไม่ตกขอบ */}
+            {/* เลขที่ใบกำกับ: ให้ผู้ใช้ใส่ค่าเอง และจำค่าล่าสุดที่ผู้ใช้แก้ไขไว้ */}
             <div className="flex items-center gap-1 min-w-0">
               <span className="font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm shrink-0">
                 เลขที่:
@@ -244,36 +244,18 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                   type="text"
                   value={meta.invoiceNo}
                   onChange={(e) => updateMeta('invoiceNo', e.target.value)}
-                  placeholder="เช่น TK69 021"
-                  title={meta.invoiceNo}
+                  placeholder="ระบุเลขที่ใบกำกับ"
+                  title={meta.invoiceNo ? `เลขที่: ${meta.invoiceNo}` : 'คลิกเพื่อระบุเลขที่ใบกำกับภาษี'}
                   className="font-bold text-orange-600 print:text-black px-1.5 py-1 rounded border border-slate-200 focus:border-orange-400 focus:bg-orange-50/50 w-full min-w-0 focus:outline-none text-xs sm:text-[13px] font-mono tracking-tight"
                 />
-                <button
-                  type="button"
-                  onClick={onIncrementInvoiceNo || onRegenerateInvoiceNo}
-                  className="no-print p-0.5 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
-                  title="เพิ่มเลขที่บิลถัดไป (+1)"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-                {onOpenInvoiceNoSettings && (
+                {onIncrementInvoiceNo && (
                   <button
                     type="button"
-                    onClick={onOpenInvoiceNoSettings}
-                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
-                    title="ตั้งค่าเลขที่เริ่มต้น"
+                    onClick={onIncrementInvoiceNo}
+                    className="no-print p-0.5 rounded hover:bg-orange-50 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
+                    title="เพิ่มเลขที่บิลถัดไป (+1)"
                   >
-                    <Settings className="w-3 h-3" />
-                  </button>
-                )}
-                {!onOpenInvoiceNoSettings && (
-                  <button
-                    type="button"
-                    onClick={onRegenerateInvoiceNo}
-                    className="no-print p-0.5 rounded hover:bg-slate-100 text-slate-400 hover:text-orange-600 transition-colors shrink-0 cursor-pointer"
-                    title="สร้างเลขที่ใบกำกับอัตโนมัติ"
-                  >
-                    <RefreshCw className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>

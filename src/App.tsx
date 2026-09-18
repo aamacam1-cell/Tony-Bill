@@ -12,6 +12,7 @@ import {
   DEFAULT_ISSUER,
   INITIAL_CUSTOMER,
   INITIAL_META,
+  INITIAL_ITEMS,
   SAMPLE_ITEMS,
   loadSavedIssuer,
   saveIssuerAsDefault,
@@ -21,6 +22,8 @@ import {
   getLastSavedOrPrintedInvoiceNo,
   setLastSavedOrPrintedInvoiceNo,
   getDefaultInvoiceNumber,
+  getLastUserInvoiceNo,
+  saveLastUserInvoiceNo,
 } from './utils/invoiceDefaults';
 import { loadCustomerProfiles, saveOrUpdateCustomerProfile } from './utils/customerDb';
 import { loadInvoiceHistory } from './utils/historyDb';
@@ -32,7 +35,6 @@ import { InvoicePaper } from './components/InvoicePaper';
 import { CustomerModal } from './components/CustomerModal';
 import { IssuerModal } from './components/IssuerModal';
 import { HistoryModal } from './components/HistoryModal';
-import { InvoiceNoSettingsModal } from './components/InvoiceNoSettingsModal';
 import { FileText, Layers, CheckCircle2, Info, RotateCcw, Undo2, X, BookmarkCheck } from 'lucide-react';
 
 export default function App() {
@@ -41,12 +43,12 @@ export default function App() {
   const [lastSavedOrPrintedNo, setLastSavedOrPrintedNo] = useState<string>(() => {
     return getLastSavedOrPrintedInvoiceNo() || '';
   });
-  const [isInvoiceNoModalOpen, setIsInvoiceNoModalOpen] = useState(false);
   const [meta, setMeta] = useState<InvoiceMeta>(() => {
-    const defaultNo = getDefaultInvoiceNumber();
+    const savedUserNo = getLastUserInvoiceNo();
+    const defaultNo = savedUserNo || getDefaultInvoiceNumber() || INITIAL_META.invoiceNo;
     const initial: InvoiceMeta = {
       ...INITIAL_META,
-      invoiceNo: defaultNo || INITIAL_META.invoiceNo,
+      invoiceNo: defaultNo,
     };
     try {
       const savedCashier = localStorage.getItem('tk_invoice_cashier_name');
@@ -58,7 +60,7 @@ export default function App() {
     }
     return initial;
   });
-  const [items, setItems] = useState<InvoiceItem[]>(SAMPLE_ITEMS);
+  const [items, setItems] = useState<InvoiceItem[]>(INITIAL_ITEMS);
   const [vatMode, setVatMode] = useState<VatMode>('ADD_VAT');
   const [zoom, setZoom] = useState<number>(1.0);
 
@@ -68,6 +70,13 @@ export default function App() {
         localStorage.setItem('tk_invoice_cashier_name', newMeta.cashierName);
       } catch {
         // ignore
+      }
+    }
+    if (newMeta.invoiceNo !== meta.invoiceNo) {
+      if (newMeta.invoiceNo && newMeta.invoiceNo.trim()) {
+        saveLastUserInvoiceNo(newMeta.invoiceNo);
+        setLastSavedOrPrintedInvoiceNo(newMeta.invoiceNo);
+        setLastSavedOrPrintedNo(newMeta.invoiceNo);
       }
     }
     setMeta(newMeta);
@@ -129,6 +138,7 @@ export default function App() {
   // Handle printing (both pages)
   const handlePrint = () => {
     const currentNo = meta.invoiceNo || 'TK-UNNAMED';
+    saveLastUserInvoiceNo(currentNo);
     setLastSavedOrPrintedInvoiceNo(currentNo);
     setLastSavedOrPrintedNo(currentNo);
 
@@ -144,6 +154,7 @@ export default function App() {
     ).length;
 
     const currentNo = meta.invoiceNo || 'TK-UNNAMED';
+    saveLastUserInvoiceNo(currentNo);
     setLastSavedOrPrintedInvoiceNo(currentNo);
     setLastSavedOrPrintedNo(currentNo);
 
@@ -180,6 +191,7 @@ export default function App() {
 
   // Load a saved invoice record back into the editor
   const handleLoadInvoiceFromHistory = (record: SavedInvoiceRecord) => {
+    saveLastUserInvoiceNo(record.invoiceNo);
     setLastSavedOrPrintedInvoiceNo(record.invoiceNo);
     setLastSavedOrPrintedNo(record.invoiceNo);
 
@@ -276,7 +288,11 @@ export default function App() {
 
   const handleReset = () => {
     const todayISO = getTodayISODate();
-    const keptInvoiceNo = lastSavedOrPrintedNo || meta.invoiceNo;
+    // ถ้ามีค่าเดิมอยู่แล้ว ก็ไม่ต้องลบออก ให้บันทึก จำค่าล่าสุดที่ผู้ใช้ได้แก้ไขไว้ เพื่อใช้ในครั้งต่อไป
+    const keptInvoiceNo = meta.invoiceNo || getLastUserInvoiceNo() || lastSavedOrPrintedNo || getDefaultInvoiceNumber();
+    saveLastUserInvoiceNo(keptInvoiceNo);
+    setLastSavedOrPrintedInvoiceNo(keptInvoiceNo);
+    setLastSavedOrPrintedNo(keptInvoiceNo);
 
     // Store previous data in case user wants to undo
     setResetNotification({
@@ -339,6 +355,9 @@ export default function App() {
   // Increment invoice number when user explicitly clicks the button
   const handleIncrementInvoiceNo = () => {
     const nextNo = incrementInvoiceNumber(meta.invoiceNo);
+    saveLastUserInvoiceNo(nextNo);
+    setLastSavedOrPrintedInvoiceNo(nextNo);
+    setLastSavedOrPrintedNo(nextNo);
     setMeta((prev) => ({ ...prev, invoiceNo: nextNo }));
     setSaveToast({
       message: `ปรับเลขที่ใบกำกับเป็น ${nextNo} เรียบร้อยแล้ว`,
@@ -352,6 +371,9 @@ export default function App() {
   };
 
   const handleApplyInvoiceNo = (newNo: string) => {
+    saveLastUserInvoiceNo(newNo);
+    setLastSavedOrPrintedInvoiceNo(newNo);
+    setLastSavedOrPrintedNo(newNo);
     setMeta((prev) => ({ ...prev, invoiceNo: newNo }));
     setSaveToast({
       message: `ปรับเลขที่ใบกำกับเป็น ${newNo} แล้ว`,
@@ -375,8 +397,6 @@ export default function App() {
         isInvoiceSaved={historyRecords.some((r) => r.invoiceNo.trim() === meta.invoiceNo.trim())}
         zoom={zoom}
         onZoomChange={setZoom}
-        onOpenInvoiceNoModal={() => setIsInvoiceNoModalOpen(true)}
-        currentInvoiceNo={meta.invoiceNo}
       />
 
       {/* Main Workspace / A4 Sheet View */}
@@ -437,7 +457,6 @@ export default function App() {
               calcResult={calcResult}
               onRegenerateInvoiceNo={handleRegenerateInvoiceNo}
               onIncrementInvoiceNo={handleIncrementInvoiceNo}
-              onOpenInvoiceNoSettings={() => setIsInvoiceNoModalOpen(true)}
               customers={customers}
               onSelectCustomer={handleSelectCustomer}
               onOpenCustomerModal={() => setIsCustomerModalOpen(true)}
@@ -484,7 +503,6 @@ export default function App() {
               calcResult={calcResult}
               onRegenerateInvoiceNo={handleRegenerateInvoiceNo}
               onIncrementInvoiceNo={handleIncrementInvoiceNo}
-              onOpenInvoiceNoSettings={() => setIsInvoiceNoModalOpen(true)}
               customers={customers}
               onSelectCustomer={handleSelectCustomer}
               onOpenCustomerModal={() => setIsCustomerModalOpen(true)}
@@ -494,16 +512,6 @@ export default function App() {
           </section>
         </div>
       </main>
-
-      {/* Invoice Number Settings Modal */}
-      <InvoiceNoSettingsModal
-        isOpen={isInvoiceNoModalOpen}
-        onClose={() => setIsInvoiceNoModalOpen(false)}
-        currentInvoiceNo={meta.invoiceNo}
-        lastSavedOrPrintedNo={lastSavedOrPrintedNo}
-        onApplyInvoiceNo={handleApplyInvoiceNo}
-        onIncrementInvoiceNo={handleIncrementInvoiceNo}
-      />
 
       {/* Customer Database Modal */}
       <CustomerModal
