@@ -1,31 +1,24 @@
 /**
- * Unregister any active Service Workers and clear offline caches
- * (Cancelled Service Worker / Static Cache as requested)
+ * Service Worker Registration for Offline (PWA) Support
+ * Enables complete offline access for invoicing, editing, saving, and printing.
  */
-export function unregisterServiceWorker(): void {
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for (const registration of registrations) {
-        registration.unregister().then((success) => {
-          if (success) {
-            console.log('[SW] Service Worker unregistered successfully:', registration.scope);
-          }
-        });
-      }
-    }).catch((err) => {
-      console.warn('[SW] Error unregistering service workers:', err);
-    });
+import { registerSW } from 'virtual:pwa-register';
 
-    // Clear any previously created offline caches
-    if ('caches' in window) {
-      caches.keys().then((names) => {
-        for (const name of names) {
-          caches.delete(name);
-        }
-      }).catch((err) => {
-        console.warn('[SW] Error clearing caches:', err);
-      });
-    }
+export function setupServiceWorker(): void {
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        console.log('[PWA] New version available, updating...');
+        updateSW(true);
+      },
+      onOfflineReady() {
+        console.log('[PWA] App is cached and ready to work completely offline.');
+      },
+      onRegisterError(error: unknown) {
+        console.warn('[PWA] Service worker registration error:', error);
+      },
+    });
   }
 }
+
 

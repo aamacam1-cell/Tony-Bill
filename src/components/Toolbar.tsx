@@ -13,7 +13,11 @@ import {
   History,
   BookmarkCheck,
   Hash,
+  WifiOff,
+  Wifi,
+  Download,
 } from 'lucide-react';
+import { useOnlineStatus, usePWAInstall } from '../hooks/usePWA';
 
 interface ToolbarProps {
   onOpenIssuerModal: () => void;
@@ -50,6 +54,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [invoiceSaveSuccess, setInvoiceSaveSuccess] = useState(false);
+  const isOnline = useOnlineStatus();
+  const { isInstallable, isInstalled, install } = usePWAInstall();
 
   const handleSaveIssuerClick = () => {
     onSaveIssuerDefault();
@@ -66,25 +72,58 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <header className="no-print sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-xs">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Left: App Title & Document status */}
+        {/* Left: App Title & Document status & Online/Offline status */}
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="w-10 h-10 rounded-lg bg-orange-600 flex items-center justify-center text-white font-bold shadow-xs shrink-0">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight flex items-center gap-2">
-              <span>ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน
+              </h1>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800 flex items-center gap-1">
                 <Layers className="w-3.5 h-3.5 text-orange-600" />
-                <span>พิมพ์ 2 หน้า (ต้นฉบับ + สำเนา)</span>
+                <span>พิมพ์ 2 หน้า</span>
               </span>
-            </h1>
+
+              {/* Offline / Online Status Badge */}
+              {!isOnline ? (
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white flex items-center gap-1 shadow-2xs animate-pulse"
+                  title="ทำงานในโหมดออฟไลน์: ไม่ต้องต่อเน็ต แก้ไขและพิมพ์ได้ตามปกติ"
+                >
+                  <WifiOff className="w-3.5 h-3.5" />
+                  <span>โหมดออฟไลน์</span>
+                </span>
+              ) : (
+                <span
+                  className="hidden md:inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full"
+                  title="ระบบรองรับการทำงานเต็มรูปแบบแม้ออฟไลน์ไม่มีอินเทอร์เน็ต"
+                >
+                  <Wifi className="w-3 h-3 text-emerald-600" />
+                  <span>พร้อมใช้งานออฟไลน์</span>
+                </span>
+              )}
+            </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">TAX INVOICE / RECEIPT GENERATOR (A4 PRINT READY)</p>
           </div>
         </div>
 
-        {/* Center: Controls for Customer DB, History, Edit Issuer & Zoom */}
+        {/* Center: Controls for Customer DB, History, Edit Issuer, PWA Install & Zoom */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* PWA Install Button when installable */}
+          {!isInstalled && isInstallable && (
+            <button
+              type="button"
+              onClick={install}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-300 bg-sky-50 hover:bg-sky-100 hover:text-sky-900 text-xs sm:text-sm font-semibold text-sky-800 transition-colors shadow-2xs cursor-pointer"
+              title="ติดตั้งแอพลงเครื่อง (คอมพิวเตอร์/แท็บเล็ต/มือถือ) เพื่อเปิดใช้งานออฟไลน์ได้โดยตรง"
+            >
+              <Download className="w-4 h-4 text-sky-600" />
+              <span>ติดตั้งแอพ</span>
+            </button>
+          )}
           {/* Invoice History Button */}
           <button
             type="button"

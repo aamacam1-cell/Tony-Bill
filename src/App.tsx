@@ -35,6 +35,7 @@ import { InvoicePaper } from './components/InvoicePaper';
 import { CustomerModal } from './components/CustomerModal';
 import { IssuerModal } from './components/IssuerModal';
 import { HistoryModal } from './components/HistoryModal';
+import { OfflineStatusBanner } from './components/OfflineStatusBanner';
 import { FileText, Layers, CheckCircle2, Info, RotateCcw, Undo2, X, BookmarkCheck } from 'lucide-react';
 
 export default function App() {
@@ -383,6 +384,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-200/80 text-slate-900 flex flex-col font-sans antialiased">
+      {/* Offline status and PWA installation banner */}
+      <OfflineStatusBanner />
+
       {/* Top action toolbar (Hidden when printing) */}
       <Toolbar
         onOpenIssuerModal={() => setIsIssuerModalOpen(true)}

@@ -2,10 +2,10 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { unregisterServiceWorker } from './registerServiceWorker';
+import { setupServiceWorker } from './registerServiceWorker';
 
-// Unregister any active service worker and clear offline cache
-unregisterServiceWorker();
+// Register service worker for offline support
+setupServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import fs from 'fs';
 import path from 'path';
 import {defineConfig, Plugin} from 'vite';
@@ -66,7 +67,83 @@ function aistudioMediaPlugin(): Plugin {
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), aistudioMediaPlugin()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      aistudioMediaPlugin(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
+        manifest: {
+          id: '/',
+          name: 'ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน',
+          short_name: 'ใบกำกับภาษี',
+          description: 'ระบบออกใบกำกับภาษีและใบเสร็จรับเงิน (TAX INVOICE / RECEIPT) ขนาด A4 ใช้งานและพิมพ์ได้แม้ออฟไลน์',
+          theme_color: '#1e293b',
+          background_color: '#f8fafc',
+          display: 'standalone',
+          start_url: '/',
+          scope: '/',
+          icons: [
+            {
+              src: '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: '/pwa-maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+          ],
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 15,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'gstatic-fonts-cache',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
+        },
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        },
+      }),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
