@@ -67,6 +67,7 @@ function aistudioMediaPlugin(): Plugin {
 
 export default defineConfig(() => {
   return {
+    base: process.env.VITE_BASE_PATH || './',
     plugins: [
       react(),
       tailwindcss(),
@@ -75,30 +76,30 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {
-          id: '/',
+          id: './',
           name: 'ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน',
           short_name: 'ใบกำกับภาษี',
           description: 'ระบบออกใบกำกับภาษีและใบเสร็จรับเงิน (TAX INVOICE / RECEIPT) ขนาด A4 ใช้งานและพิมพ์ได้แม้ออฟไลน์',
           theme_color: '#1e293b',
           background_color: '#f8fafc',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: './',
+          scope: './',
           icons: [
             {
-              src: '/pwa-192x192.png',
+              src: 'pwa-192x192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-512x512.png',
+              src: 'pwa-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/pwa-maskable-512x512.png',
+              src: 'pwa-maskable-512x512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
