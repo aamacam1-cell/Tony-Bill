@@ -80,14 +80,162 @@ function stripRootRedirectPlugin(): Plugin {
   };
 }
 
-export default defineConfig(() => {
+function devSwNeutralizerPlugin(): Plugin {
   return {
-    base: process.env.VITE_BASE_PATH || './',
+    name: 'vite-plugin-dev-sw-neutralizer',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url ? req.url.split('?')[0].split('#')[0] : '';
+
+        // 1. Service worker scripts - clean self-unregister without reload loops
+        if (
+          url === '/sw.js' ||
+          url === '/dev-sw.js' ||
+          url.endsWith('/sw.js') ||
+          url.endsWith('/dev-sw.js')
+        ) {
+          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          res.setHeader(
+            'Cache-Control',
+            'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+          );
+          res.end(
+            `// Self-unregistering service worker for dev preview
+self.addEventListener('install', function (e) {
+  self.skipWaiting();
+});
+self.addEventListener('activate', function (e) {
+  e.waitUntil(
+    caches.keys().then(function (names) {
+      return Promise.all(names.map(function (n) { return caches.delete(n); }));
+    }).then(function () {
+      return self.registration.unregister();
+    }).then(function () {
+      return self.clients.claim();
+    })
+  );
+});`
+          );
+          return;
+        }
+
+        // 2. Workbox scripts - serve existing workbox file or dummy define
+        if (url.includes('workbox-') && url.endsWith('.js')) {
+          const fileName = path.basename(url);
+          const candidatePaths = [
+            path.resolve(__dirname, 'public', fileName),
+            path.resolve(__dirname, 'docs', fileName),
+            path.resolve(__dirname, 'dist', fileName),
+          ];
+          for (const cand of candidatePaths) {
+            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+              res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-cache');
+              fs.createReadStream(cand).pipe(res);
+              return;
+            }
+          }
+          // Fallback to any workbox in docs/
+          const docsFiles = fs.existsSync(path.resolve(__dirname, 'docs'))
+            ? fs.readdirSync(path.resolve(__dirname, 'docs'))
+            : [];
+          const matched = docsFiles.find((f) => f.startsWith('workbox-') && f.endsWith('.js'));
+          if (matched) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-cache');
+            fs.createReadStream(path.resolve(__dirname, 'docs', matched)).pipe(res);
+            return;
+          }
+          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+          res.end(
+            `if (!self.define) {
+  self.define = function(deps, factory) {
+    if (typeof factory === 'function') factory();
+  };
+}`
+          );
+          return;
+        }
+
+        // 3. Bundled JS assets (e.g. /assets/index-*.js, /docs/assets/index-*.js)
+        if (url.match(/\/(docs\/)?assets\/.*\.js$/)) {
+          const fileName = path.basename(url);
+          const candidatePaths = [
+            path.resolve(__dirname, 'public', 'assets', fileName),
+            path.resolve(__dirname, 'docs', 'assets', fileName),
+            path.resolve(__dirname, 'dist', 'assets', fileName),
+          ];
+          for (const cand of candidatePaths) {
+            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+              res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-cache');
+              fs.createReadStream(cand).pipe(res);
+              return;
+            }
+          }
+          // If a requested hashed JS doesn't exist, serve the latest index bundle JS
+          const assetsDir = path.resolve(__dirname, 'docs', 'assets');
+          if (fs.existsSync(assetsDir)) {
+            const files = fs.readdirSync(assetsDir);
+            const mainJs = files.find((f) => f.startsWith('index-') && f.endsWith('.js'));
+            if (mainJs) {
+              res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-cache');
+              fs.createReadStream(path.resolve(assetsDir, mainJs)).pipe(res);
+              return;
+            }
+          }
+        }
+
+        // 4. Bundled CSS assets (e.g. /assets/index-*.css, /docs/assets/index-*.css)
+        if (url.match(/\/(docs\/)?assets\/.*\.css$/)) {
+          const fileName = path.basename(url);
+          const candidatePaths = [
+            path.resolve(__dirname, 'public', 'assets', fileName),
+            path.resolve(__dirname, 'docs', 'assets', fileName),
+            path.resolve(__dirname, 'dist', 'assets', fileName),
+          ];
+          for (const cand of candidatePaths) {
+            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+              res.setHeader('Content-Type', 'text/css; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-cache');
+              fs.createReadStream(cand).pipe(res);
+              return;
+            }
+          }
+          // If a requested hashed CSS doesn't exist, serve the latest index bundle CSS
+          const assetsDir = path.resolve(__dirname, 'docs', 'assets');
+          if (fs.existsSync(assetsDir)) {
+            const files = fs.readdirSync(assetsDir);
+            const mainCss = files.find((f) => f.startsWith('index-') && f.endsWith('.css'));
+            if (mainCss) {
+              res.setHeader('Content-Type', 'text/css; charset=utf-8');
+              res.setHeader('Cache-Control', 'no-cache');
+              fs.createReadStream(path.resolve(assetsDir, mainCss)).pipe(res);
+              return;
+            }
+          }
+          res.setHeader('Content-Type', 'text/css; charset=utf-8');
+          res.end('/* fallback css */');
+          return;
+        }
+
+        next();
+      });
+    },
+  };
+}
+
+export default defineConfig(({ command }) => {
+  return {
+    base: command === 'build' ? (process.env.VITE_BASE_PATH || './') : '/',
     plugins: [
       react(),
       tailwindcss(),
       aistudioMediaPlugin(),
       stripRootRedirectPlugin(),
+      devSwNeutralizerPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
@@ -156,8 +304,7 @@ export default defineConfig(() => {
           ],
         },
         devOptions: {
-          enabled: true,
-          type: 'module',
+          enabled: false,
         },
       }),
     ],

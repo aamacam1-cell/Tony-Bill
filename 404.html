@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน</title>
+    <script>
+      (function () {
+        var p = window.location.pathname;
+        if (p.includes('/docs/')) {
+          var base = p.substring(0, p.indexOf('/docs/') + 6);
+          window.location.replace(base + window.location.search + window.location.hash);
+        } else {
+          var segments = p.split('/').filter(Boolean);
+          // If on GitHub Pages with project repository path: /<repo>/...
+          if (window.location.hostname.endsWith('github.io') && segments.length > 0) {
+            window.location.replace('/' + segments[0] + '/docs/' + window.location.search + window.location.hash);
+          } else {
+            window.location.replace('/' + window.location.search + window.location.hash);
+          }
+        }
+      })();
+    </script>
+  </head>
+  <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+    <p>กำลังเปิดระบบ...</p>
+  </body>
+</html>
