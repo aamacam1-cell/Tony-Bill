@@ -65,6 +65,21 @@ function aistudioMediaPlugin(): Plugin {
 }
 // LINT.ThenChange(//depot/google3/java/com/google/alkali/boq/makersuite/applet_dev_service/templates/initializers/react_theme/vite.config.ts:aistudio_media_plugin)
 
+function stripRootRedirectPlugin(): Plugin {
+  return {
+    name: 'strip-root-redirect',
+    transformIndexHtml(html, ctx) {
+      if (ctx.bundle) {
+        return html.replace(
+          /<!-- GITHUB_PAGES_ROOT_REDIRECT_START -->[\s\S]*?<!-- GITHUB_PAGES_ROOT_REDIRECT_END -->/,
+          ''
+        );
+      }
+      return html;
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
     base: process.env.VITE_BASE_PATH || './',
@@ -72,6 +87,7 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       aistudioMediaPlugin(),
+      stripRootRedirectPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],

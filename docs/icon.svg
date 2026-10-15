@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  <g filter="url(#shadow)">
+    <path d="M128 88 H320 L384 152 V424 H128 Z" fill="#ffffff"/>
+    <path d="M320 88 V152 H384 Z" fill="#cbd5e1"/>
+    <!-- Header line -->
+    <rect x="168" y="140" width="130" height="20" rx="4" fill="#1e3a8a"/>
+    <!-- Items -->
+    <rect x="168" y="196" width="176" height="12" rx="3" fill="#94a3b8"/>
+    <rect x="168" y="232" width="144" height="12" rx="3" fill="#94a3b8"/>
+    <rect x="168" y="268" width="176" height="12" rx="3" fill="#94a3b8"/>
+    <!-- Total Pill -->
+    <rect x="236" y="340" width="108" height="34" rx="8" fill="#10b981"/>
+    <text x="290" y="363" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle" font-family="sans-serif">PAID</text>
+  </g>
+</svg>
