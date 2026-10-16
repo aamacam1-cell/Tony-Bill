@@ -5,19 +5,21 @@
     <title>ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน</title>
     <script>
       (function () {
-        var p = window.location.pathname;
-        if (p.includes('/docs/')) {
-          var base = p.substring(0, p.indexOf('/docs/') + 6);
-          window.location.replace(base + window.location.search + window.location.hash);
-        } else {
-          var segments = p.split('/').filter(Boolean);
-          // If on GitHub Pages with project repository path: /<repo>/...
-          if (window.location.hostname.endsWith('github.io') && segments.length > 0) {
-            window.location.replace('/' + segments[0] + '/docs/' + window.location.search + window.location.hash);
-          } else {
-            window.location.replace('/' + window.location.search + window.location.hash);
+        var path = window.location.pathname || '';
+        var hostname = window.location.hostname || '';
+        var search = window.location.search || '';
+        var hash = window.location.hash || '';
+
+        if (hostname.endsWith('github.io')) {
+          var segments = path.split('/').filter(Boolean);
+          if (segments.length > 0) {
+            var repo = segments[0];
+            // If someone opened legacy /docs/, strip it and redirect to /<repo>/
+            window.location.replace('/' + repo + '/' + search + hash);
+            return;
           }
         }
+        window.location.replace('/' + search + hash);
       })();
     </script>
   </head>

@@ -65,21 +65,6 @@ function aistudioMediaPlugin(): Plugin {
 }
 // LINT.ThenChange(//depot/google3/java/com/google/alkali/boq/makersuite/applet_dev_service/templates/initializers/react_theme/vite.config.ts:aistudio_media_plugin)
 
-function stripRootRedirectPlugin(): Plugin {
-  return {
-    name: 'strip-root-redirect',
-    transformIndexHtml(html, ctx) {
-      if (ctx.bundle) {
-        return html.replace(
-          /<!-- GITHUB_PAGES_ROOT_REDIRECT_START -->[\s\S]*?<!-- GITHUB_PAGES_ROOT_REDIRECT_END -->/,
-          ''
-        );
-      }
-      return html;
-    },
-  };
-}
-
 function devSwNeutralizerPlugin(): Plugin {
   return {
     name: 'vite-plugin-dev-sw-neutralizer',
@@ -234,7 +219,6 @@ export default defineConfig(({ command }) => {
       react(),
       tailwindcss(),
       aistudioMediaPlugin(),
-      stripRootRedirectPlugin(),
       devSwNeutralizerPlugin(),
       VitePWA({
         registerType: 'autoUpdate',
