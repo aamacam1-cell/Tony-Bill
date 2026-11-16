@@ -335,7 +335,7 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 <Building2 className="w-4 h-4" />
                 <span>ผู้ออกใบกำกับภาษี / ผู้ขาย</span>
               </div>
-              {onOpenIssuerModal && (
+              {isOriginal && onOpenIssuerModal && (
                 <button
                   type="button"
                   onClick={onOpenIssuerModal}
@@ -440,69 +440,73 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 <span>ลูกค้า / ผู้ซื้อ</span>
               </div>
 
-              {/* Action buttons for Customer Database */}
-              <div className="no-print flex items-center gap-1.5 text-xs">
-                <button
-                  type="button"
-                  onClick={onQuickSaveCustomer}
-                  className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-slate-300 hover:border-orange-400 hover:text-orange-600 rounded shadow-2xs font-semibold transition-colors cursor-pointer"
-                  title="บันทึกข้อมูลลูกค้าที่กรอกอยู่นี้ลงในฐานข้อมูล"
-                >
-                  <BookmarkPlus className="w-3.5 h-3.5 text-orange-600" />
-                  <span>บันทึกคนนี้</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={onOpenCustomerModal}
-                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded shadow-2xs font-semibold transition-colors cursor-pointer"
-                  title="เปิดหน้าต่างจัดการฐานข้อมูลลูกค้าทั้งหมด"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  <span>จัดการฐานข้อมูล</span>
-                </button>
-              </div>
+              {/* Action buttons for Customer Database (แสดงเฉพาะใบต้นฉบับ) */}
+              {isOriginal && (
+                <div className="no-print flex items-center gap-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={onQuickSaveCustomer}
+                    className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-white border border-slate-300 hover:border-orange-400 hover:text-orange-600 rounded shadow-2xs font-semibold transition-colors cursor-pointer"
+                    title="บันทึกข้อมูลลูกค้าที่กรอกอยู่นี้ลงในฐานข้อมูล"
+                  >
+                    <BookmarkPlus className="w-3.5 h-3.5 text-orange-600" />
+                    <span>บันทึกคนนี้</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenCustomerModal}
+                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-orange-600 hover:bg-orange-700 text-white rounded shadow-2xs font-semibold transition-colors cursor-pointer"
+                    title="เปิดหน้าต่างจัดการฐานข้อมูลลูกค้าทั้งหมด"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>จัดการฐานข้อมูล</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Dropdown to select customer (ซิงค์สถานะ เมื่อกดรีเซ็ตจะกลับเป็นค่าเริ่มต้นทันที) */}
-            <div className="no-print mb-2 flex items-center gap-2 min-w-0 max-w-full overflow-hidden">
-              <span className="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1 shrink-0">
-                <Tag className="w-3.5 h-3.5 text-orange-600" />
-                <span>เลือกชื่อลูกค้า:</span>
-              </span>
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (!val) {
-                    onCustomerChange({
-                      alias: '',
-                      name: '',
-                      contact: '',
-                      phone: '',
-                      address: '',
-                      taxId: '',
-                      branch: 'สำนักงานใหญ่',
-                      deliveryDate: customer.deliveryDate || getTodayISODate(),
-                    });
-                    return;
-                  }
-                  const found = customers.find((c) => c.id === val);
-                  if (found) {
-                    onSelectCustomer(found);
-                  }
-                }}
-                className="w-full min-w-0 max-w-full px-2 py-1 bg-white border border-orange-300 rounded text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-orange-500 truncate cursor-pointer"
-              >
-                <option value="">
-                  -- เลือกชื่อลูกค้า --
-                </option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    ⭐ {c.alias} — {c.companyName}
+            {/* Dropdown to select customer (แสดงเฉพาะใบต้นฉบับ เพราะใบสำเนาใช้ข้อมูลเดียวกับต้นฉบับ) */}
+            {isOriginal && (
+              <div className="no-print mb-2 flex items-center gap-2 min-w-0 max-w-full overflow-hidden">
+                <span className="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1 shrink-0">
+                  <Tag className="w-3.5 h-3.5 text-orange-600" />
+                  <span>เลือกชื่อลูกค้า:</span>
+                </span>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) {
+                      onCustomerChange({
+                        alias: '',
+                        name: '',
+                        contact: '',
+                        phone: '',
+                        address: '',
+                        taxId: '',
+                        branch: 'สำนักงานใหญ่',
+                        deliveryDate: customer.deliveryDate || getTodayISODate(),
+                      });
+                      return;
+                    }
+                    const found = customers.find((c) => c.id === val);
+                    if (found) {
+                      onSelectCustomer(found);
+                    }
+                  }}
+                  className="w-full min-w-0 max-w-full px-2 py-1 bg-white border border-orange-300 rounded text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-orange-500 truncate cursor-pointer"
+                >
+                  <option value="">
+                    -- เลือกชื่อลูกค้า --
                   </option>
-                ))}
-              </select>
-            </div>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      ⭐ {c.alias} — {c.companyName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="space-y-1.5 text-xs sm:text-sm">
               {/* บรรทัด 1: ชื่อลูกค้า + ย้าย สาขา มาต่อท้ายในบรรทัดเดียวกัน */}
