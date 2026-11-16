@@ -40,9 +40,9 @@ export function usePWAInstall() {
   useEffect(() => {
     // Detect standalone mode (already installed or running as standalone app)
     const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    setIsInstalled(isStandalone);
+      (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) ||
+      (typeof window !== 'undefined' && !!(window.navigator as unknown as { standalone?: boolean })?.standalone);
+    setIsInstalled(!!isStandalone);
 
     // Detect iOS devices
     const userAgent = window.navigator.userAgent.toLowerCase();

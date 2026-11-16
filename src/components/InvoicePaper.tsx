@@ -377,19 +377,27 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 </div>
               </div>
 
-              {/* บรรทัด 2: ที่อยู่ + ย้าย เบอร์โทร ให้ไปอยู่ต่อท้ายในบรรทัดเดียวกัน */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
-                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0">
+              {/* บรรทัด 2: ที่อยู่ + ย้าย เบอร์โทร ให้ไปอยู่ต่อท้ายในบรรทัดเดียวกัน (รองรับขึ้นบรรทัดใหม่เมื่อข้อมูลยาว) */}
+              <div className="flex flex-wrap sm:flex-nowrap items-start gap-2">
+                <div className="flex items-start gap-1.5 flex-1 min-w-[200px]">
+                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0 pt-0.5 print:pt-0">
                     ที่อยู่:
                   </span>
-                  <input
-                    type="text"
-                    value={issuer.address}
-                    onChange={(e) => updateIssuer('address', e.target.value)}
-                    placeholder="ที่อยู่ร้านค้า"
-                    className="w-full text-slate-800 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-xs sm:text-sm"
-                  />
+                  <div className="grid flex-1 min-w-0">
+                    <div
+                      aria-hidden="true"
+                      className="col-start-1 row-start-1 w-full min-w-0 invisible whitespace-pre-wrap break-words px-2 py-0.5 border border-transparent text-xs sm:text-sm leading-relaxed font-sans text-slate-800 print:visible print:text-black print:p-0 print:border-none"
+                    >
+                      {(issuer.address || '') + '\u200b'}
+                    </div>
+                    <textarea
+                      rows={1}
+                      value={issuer.address}
+                      onChange={(e) => updateIssuer('address', e.target.value)}
+                      placeholder="ที่อยู่ร้านค้า"
+                      className="col-start-1 row-start-1 w-full h-full min-w-0 resize-none overflow-hidden text-slate-800 bg-white border border-slate-200 focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-xs sm:text-sm leading-relaxed font-sans print:hidden"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="font-semibold text-slate-700 print:text-black whitespace-nowrap text-xs sm:text-sm flex items-center gap-0.5">
@@ -525,19 +533,27 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                 </div>
               </div>
 
-              {/* บรรทัด 2: ที่อยู่ + ย้าย เบอร์โทร ให้ไปอยู่ต่อท้ายในบรรทัดเดียวกัน */}
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
-                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0">
+              {/* บรรทัด 2: ที่อยู่ + ย้าย เบอร์โทร ให้ไปอยู่ต่อท้ายในบรรทัดเดียวกัน (รองรับขึ้นบรรทัดใหม่เมื่อข้อมูลยาว) */}
+              <div className="flex flex-wrap sm:flex-nowrap items-start gap-2">
+                <div className="flex items-start gap-1.5 flex-1 min-w-[200px]">
+                  <span className="text-slate-700 print:text-black font-semibold text-xs sm:text-sm whitespace-nowrap shrink-0 pt-0.5 print:pt-0">
                     ที่อยู่:
                   </span>
-                  <input
-                    type="text"
-                    value={customer.address || ''}
-                    onChange={(e) => updateCustomer('address', e.target.value)}
-                    placeholder="ที่อยู่ลูกค้า (เลขที่, ถนน, ตำบล, อำเภอ, จังหวัด, รหัสไปรษณีย์)"
-                    className="w-full text-slate-800 print:text-black bg-white print:bg-transparent border border-slate-200 print:border-none focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-xs sm:text-sm"
-                  />
+                  <div className="grid flex-1 min-w-0">
+                    <div
+                      aria-hidden="true"
+                      className="col-start-1 row-start-1 w-full min-w-0 invisible whitespace-pre-wrap break-words px-2 py-0.5 border border-transparent text-xs sm:text-sm leading-relaxed font-sans text-slate-800 print:visible print:text-black print:p-0 print:border-none"
+                    >
+                      {(customer.address || '') + '\u200b'}
+                    </div>
+                    <textarea
+                      rows={1}
+                      value={customer.address || ''}
+                      onChange={(e) => updateCustomer('address', e.target.value)}
+                      placeholder="ที่อยู่ลูกค้า (เลขที่, ถนน, ตำบล, อำเภอ, จังหวัด, รหัสไปรษณีย์)"
+                      className="col-start-1 row-start-1 w-full h-full min-w-0 resize-none overflow-hidden text-slate-800 bg-white border border-slate-200 focus:border-orange-400 focus:outline-none px-2 py-0.5 rounded text-xs sm:text-sm leading-relaxed font-sans print:hidden"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="font-semibold text-slate-700 print:text-black whitespace-nowrap text-xs sm:text-sm flex items-center gap-0.5">

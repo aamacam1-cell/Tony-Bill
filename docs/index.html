@@ -24,23 +24,28 @@
       // Immediate cleanup of service workers and stale CacheStorage in local dev and AI Studio preview
       (function () {
         try {
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
             var h = window.location.hostname || '';
             if (h === 'localhost' || h === '127.0.0.1' || h.indexOf('run.app') !== -1) {
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function (regs) {
-                  for (var i = 0; i < regs.length; i++) {
-                    regs[i].unregister();
-                  }
-                }).catch(function () {});
-              }
-              if ('caches' in window) {
-                caches.keys().then(function (keys) {
-                  for (var i = 0; i < keys.length; i++) {
-                    caches.delete(keys[i]);
-                  }
-                }).catch(function () {});
-              }
+              navigator.serviceWorker.getRegistrations().then(function (regs) {
+                var promises = [];
+                for (var i = 0; i < regs.length; i++) {
+                  promises.push(regs[i].unregister());
+                }
+                return Promise.all(promises);
+              }).then(function () {
+                if ('caches' in window) {
+                  return caches.keys().then(function (keys) {
+                    return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                  });
+                }
+              }).then(function () {
+                // If page was loaded from an active service worker cache, reload once cleanly
+                if (navigator.serviceWorker.controller && !sessionStorage.getItem('__sw_cleared_once')) {
+                  sessionStorage.setItem('__sw_cleared_once', '1');
+                  window.location.reload();
+                }
+              }).catch(function () {});
             }
           }
         } catch (e) {}
@@ -54,8 +59,8 @@
         }
       });
     </script>
-    <script type="module" crossorigin src="./assets/index-DmKL8szy.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CqNVnCil.css">
+    <script type="module" crossorigin src="./assets/index-CFjevq2L.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BM-0QAu-.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body class="font-sans antialiased text-slate-800 bg-slate-100">
     <div id="root">

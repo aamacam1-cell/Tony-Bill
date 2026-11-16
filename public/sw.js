@@ -11,6 +11,18 @@ self.addEventListener('activate', function (e) {
       return self.registration.unregister();
     }).then(function () {
       return self.clients.claim();
+    }).then(function () {
+      return self.clients.matchAll({ type: 'window' });
+    }).then(function (clients) {
+      clients.forEach(function (c) {
+        if (c && typeof c.navigate === 'function') {
+          c.navigate(c.url);
+        }
+      });
     })
   );
+});
+
+self.addEventListener('fetch', function (e) {
+  e.respondWith(fetch(e.request));
 });

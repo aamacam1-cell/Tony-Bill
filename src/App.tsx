@@ -36,7 +36,7 @@ import { CustomerModal } from './components/CustomerModal';
 import { IssuerModal } from './components/IssuerModal';
 import { HistoryModal } from './components/HistoryModal';
 import { OfflineStatusBanner } from './components/OfflineStatusBanner';
-import { FileText, Layers, CheckCircle2, Info, RotateCcw, Undo2, X, BookmarkCheck } from 'lucide-react';
+import { FileText, CheckCircle2, Undo2, X, BookmarkCheck } from 'lucide-react';
 
 export default function App() {
   const [issuer, setIssuer] = useState<IssuerInfo>(() => loadSavedIssuer());
@@ -289,22 +289,24 @@ export default function App() {
 
   const handleReset = () => {
     const todayISO = getTodayISODate();
-    // ถ้ามีค่าเดิมอยู่แล้ว ก็ไม่ต้องลบออก ให้บันทึก จำค่าล่าสุดที่ผู้ใช้ได้แก้ไขไว้ เพื่อใช้ในครั้งต่อไป
-    const keptInvoiceNo = meta.invoiceNo || getLastUserInvoiceNo() || lastSavedOrPrintedNo || getDefaultInvoiceNumber();
-    saveLastUserInvoiceNo(keptInvoiceNo);
-    setLastSavedOrPrintedInvoiceNo(keptInvoiceNo);
-    setLastSavedOrPrintedNo(keptInvoiceNo);
+    // ใช้เลขที่บิลปัจจุบัน (หรือล่าสุดที่จำไว้) แล้วรันเลขที่บิลถัดไป (+1) โดยอัตโนมัติ
+    const currentInvoiceNo =
+      meta.invoiceNo || getLastUserInvoiceNo() || lastSavedOrPrintedNo || getDefaultInvoiceNumber();
+    const nextInvoiceNo = incrementInvoiceNumber(currentInvoiceNo);
+    saveLastUserInvoiceNo(nextInvoiceNo);
+    setLastSavedOrPrintedInvoiceNo(nextInvoiceNo);
+    setLastSavedOrPrintedNo(nextInvoiceNo);
 
     // Store previous data in case user wants to undo
     setResetNotification({
-      invoiceNo: keptInvoiceNo,
+      invoiceNo: nextInvoiceNo,
       prevCustomer: { ...customer },
       prevMeta: { ...meta },
       prevItems: [...items],
       prevVatMode: vatMode,
     });
 
-    // Requirement 3: เมื่อกดปุ่ม รีเซ็ต ให้ล้างข้อมูล เฉพาะ ของ ลูกค้า / ผู้ซื้อ (รวมถึงตัวเลือกชื่อลูกค้าด้วย)
+    // ล้างเฉพาะข้อมูลลูกค้า / ผู้ซื้อ (ไม่ล้างข้อมูลผู้ออกใบกำกับภาษี / ผู้ขาย)
     setCustomer({
       alias: '',
       name: '',
@@ -316,7 +318,7 @@ export default function App() {
       deliveryDate: todayISO,
     });
 
-    // Requirement 3: และ รายการสินค้าในตาราง เท่านั้น (แถวว่าง ไม่มีข้อมูล ไม่แสดง 0.00)
+    // ล้างรายการสินค้าในตารางเป็นแถวว่างเริ่มต้น
     setItems([
       {
         id: String(Date.now()),
@@ -327,12 +329,12 @@ export default function App() {
       },
     ]);
 
-    // เคลียร์เฉพาะผู้รับสินค้า แต่คงเลขที่ใบกำกับ, วันที่, และชื่อผู้รับเงิน/แคชเชียร์ไว้ครบถ้วน (โดยวันที่ด้านล่างตรงกับวันที่เอกสาร)
+    // รันเลขที่บิล +1 และล้างผู้รับสินค้า แต่คงวันที่และชื่อผู้รับเงิน/แคชเชียร์ไว้
     setMeta((prevMeta) => {
       const docDateFormatted = formatThaiDate(prevMeta.docDate || todayISO);
       return {
         ...prevMeta,
-        invoiceNo: keptInvoiceNo,
+        invoiceNo: nextInvoiceNo,
         receiverName: '',
         receiverDate: docDateFormatted,
         cashierDate: docDateFormatted,
@@ -342,6 +344,12 @@ export default function App() {
 
   const handleUndoReset = () => {
     if (!resetNotification) return;
+    const restoredNo = resetNotification.prevMeta.invoiceNo;
+    if (restoredNo && restoredNo.trim()) {
+      saveLastUserInvoiceNo(restoredNo);
+      setLastSavedOrPrintedInvoiceNo(restoredNo);
+      setLastSavedOrPrintedNo(restoredNo);
+    }
     setCustomer(resetNotification.prevCustomer);
     setMeta(resetNotification.prevMeta);
     setItems(resetNotification.prevItems);
@@ -405,22 +413,6 @@ export default function App() {
 
       {/* Main Workspace / A4 Sheet View */}
       <main className="flex-1 overflow-x-auto py-6 px-2 sm:px-4 flex flex-col items-center">
-        {/* Info banner for multi-page printing */}
-        <div className="no-print max-w-4xl w-full mb-4 px-4 py-2.5 rounded-lg bg-orange-50 border border-orange-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-orange-950 font-medium shadow-2xs">
-          <div className="flex items-center gap-2.5">
-            <Layers className="w-4 h-4 text-orange-600 shrink-0" />
-            <span>
-              <strong>ระบบจะพิมพ์พร้อมกัน 2 หน้าอัตโนมัติ:</strong> หน้า 1 (ต้นฉบับ) และ หน้า 2 (สำเนา) ข้อมูลแก้ไขจะเชื่อมโยงกันแบบเรียลไทม์
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="shrink-0 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-2xs text-xs sm:text-sm cursor-pointer transition-colors"
-          >
-            กดพิมพ์ (2 หน้า)
-          </button>
-        </div>
 
         {/* Printable Area containing both Page 1 (Original) and Page 2 (Copy) */}
         <div
@@ -579,7 +571,7 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <span>
-              ล้างข้อมูลลูกค้าและรายการสินค้าเรียบร้อย{' '}
+              เปิดบิลใหม่เรียบร้อย เลขที่บิล:{' '}
               <strong className="text-orange-400 font-mono">({resetNotification.invoiceNo})</strong>
             </span>
           </div>

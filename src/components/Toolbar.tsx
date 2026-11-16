@@ -235,15 +235,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
           </button>
 
-          {/* Reset / Clear Customer & Items button */}
+          {/* New Bill / Clear Customer & Items button */}
           <button
             type="button"
             onClick={onReset}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-colors shadow-2xs cursor-pointer"
-            title="รีเซ็ตล้างข้อมูลลูกค้าและรายการสินค้า (คงเลขที่บิลเดิมไว้)"
+            title="เปิดบิลใหม่: ล้างข้อมูลลูกค้า/ผู้ซื้อและรายการสินค้า พร้อมรันเลขที่บิลถัดไป (+1) โดยคงข้อมูลผู้ขายไว้"
           >
             <RotateCcw className="w-4 h-4 text-orange-600" />
-            <span>รีเซ็ต</span>
+            <span>เปิดบิลใหม่</span>
           </button>
 
           {/* Print button */}
@@ -254,7 +254,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             title="สั่งพิมพ์ออกกระดาษ A4 (พิมพ์ทั้งต้นฉบับและสำเนา รวม 2 หน้า) หรือบันทึกเป็น PDF"
           >
             <Printer className="w-4 h-4" />
-            <span>พิมพ์เอกสาร (2 หน้า)</span>
+            <span>พิมพ์เอกสาร</span>
           </button>
         </div>
       </div>

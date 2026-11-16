@@ -1,6 +1,11 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { SavedInvoiceRecord } from '../types';
-import { loadInvoiceHistory } from './historyDb';
+import {
+  loadInvoiceHistory,
+  saveInvoiceToHistory,
+  deleteInvoiceFromHistory,
+  clearAllInvoiceHistory,
+} from './historyDb';
 
 interface InvoiceDB extends DBSchema {
   invoices: {
@@ -87,52 +92,61 @@ export async function getAllInvoicesFromIndexedDB(): Promise<SavedInvoiceRecord[
 export async function saveInvoiceToIndexedDB(
   payload: Omit<SavedInvoiceRecord, 'id' | 'savedAt'> & { id?: string }
 ): Promise<{ record: SavedInvoiceRecord; isNew: boolean; allRecords: SavedInvoiceRecord[] }> {
-  const db = await getDB();
-  const allCurrent = await db.getAll(STORE_NAME);
-  const now = new Date().toISOString();
-
-  // Find if record exists with same ID or invoiceNo
-  const existing = allCurrent.find(
-    (item) => (payload.id && item.id === payload.id) || (payload.invoiceNo && item.invoiceNo.trim() === payload.invoiceNo.trim())
-  );
-
-  let updatedRecord: SavedInvoiceRecord;
-  let isNew = false;
-
-  if (existing) {
-    updatedRecord = {
-      ...payload,
-      id: existing.id,
-      savedAt: now,
-    };
-  } else {
-    isNew = true;
-    updatedRecord = {
-      ...payload,
-      id: payload.id || `inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      savedAt: now,
-    };
-  }
-
-  // Save to IndexedDB
-  await db.put(STORE_NAME, updatedRecord);
-
-  // Also sync to localStorage as redundancy
   try {
-    const updatedList = await getAllInvoicesFromIndexedDB();
-    localStorage.setItem('tk_invoice_history_records_v1', JSON.stringify(updatedList));
-    return {
-      record: updatedRecord,
-      isNew,
-      allRecords: updatedList,
-    };
+    const db = await getDB();
+    const allCurrent = await db.getAll(STORE_NAME);
+    const now = new Date().toISOString();
+
+    // Find if record exists with same ID or invoiceNo
+    const existing = allCurrent.find(
+      (item) => (payload.id && item.id === payload.id) || (payload.invoiceNo && item.invoiceNo.trim() === payload.invoiceNo.trim())
+    );
+
+    let updatedRecord: SavedInvoiceRecord;
+    let isNew = false;
+
+    if (existing) {
+      updatedRecord = {
+        ...payload,
+        id: existing.id,
+        savedAt: now,
+      };
+    } else {
+      isNew = true;
+      updatedRecord = {
+        ...payload,
+        id: payload.id || `inv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        savedAt: now,
+      };
+    }
+
+    // Save to IndexedDB
+    await db.put(STORE_NAME, updatedRecord);
+
+    // Also sync to localStorage as redundancy
+    try {
+      const updatedList = await getAllInvoicesFromIndexedDB();
+      localStorage.setItem('tk_invoice_history_records_v1', JSON.stringify(updatedList));
+      return {
+        record: updatedRecord,
+        isNew,
+        allRecords: updatedList,
+      };
+    } catch {
+      const updatedList = await getAllInvoicesFromIndexedDB();
+      return {
+        record: updatedRecord,
+        isNew,
+        allRecords: updatedList,
+      };
+    }
   } catch (err) {
-    console.error('[IndexedDB] LocalStorage backup error:', err);
-    const updatedList = await getAllInvoicesFromIndexedDB();
+    console.warn('[IndexedDB] DB unavailable, saving to localStorage fallback:', err);
+    const fallback = saveInvoiceToHistory(payload);
     return {
-      record: updatedRecord,
-      isNew,
-      allRecords: updatedList,
+      record: fallback.record,
+      isNew: fallback.isNew,
+      allRecords: fallback.records,
     };
   }
 }
@@ -141,26 +155,36 @@ export async function saveInvoiceToIndexedDB(
  * Delete an invoice from IndexedDB
  */
 export async function deleteInvoiceFromIndexedDB(id: string): Promise<SavedInvoiceRecord[]> {
-  const db = await getDB();
-  await db.delete(STORE_NAME, id);
-  const remaining = await getAllInvoicesFromIndexedDB();
   try {
-    localStorage.setItem('tk_invoice_history_records_v1', JSON.stringify(remaining));
+    const db = await getDB();
+    await db.delete(STORE_NAME, id);
+    const remaining = await getAllInvoicesFromIndexedDB();
+    try {
+      localStorage.setItem('tk_invoice_history_records_v1', JSON.stringify(remaining));
+    } catch (err) {
+      console.error('[IndexedDB] Error updating localStorage after delete:', err);
+    }
+    return remaining;
   } catch (err) {
-    console.error('[IndexedDB] Error updating localStorage after delete:', err);
+    console.warn('[IndexedDB] delete error, falling back to localStorage:', err);
+    return deleteInvoiceFromHistory(id);
   }
-  return remaining;
 }
 
 /**
  * Clear all invoices from IndexedDB
  */
 export async function clearAllInvoicesFromIndexedDB(): Promise<void> {
-  const db = await getDB();
-  await db.clear(STORE_NAME);
   try {
-    localStorage.removeItem('tk_invoice_history_records_v1');
+    const db = await getDB();
+    await db.clear(STORE_NAME);
+    try {
+      localStorage.removeItem('tk_invoice_history_records_v1');
+    } catch (err) {
+      console.error('[IndexedDB] Error clearing localStorage:', err);
+    }
   } catch (err) {
-    console.error('[IndexedDB] Error clearing localStorage:', err);
+    console.warn('[IndexedDB] clear error, falling back to localStorage:', err);
+    clearAllInvoiceHistory();
   }
 }
