@@ -16,7 +16,10 @@ import {
   WifiOff,
   Wifi,
   Download,
+  FileSpreadsheet,
+  ArrowLeft,
 } from 'lucide-react';
+import { AppPageView } from '../types';
 import { useOnlineStatus, usePWAInstall } from '../hooks/usePWA';
 
 interface ToolbarProps {
@@ -34,6 +37,8 @@ interface ToolbarProps {
   onZoomChange: (zoom: number) => void;
   onOpenInvoiceNoModal?: () => void;
   currentInvoiceNo?: string;
+  activePage?: AppPageView;
+  onToggleQuotationPage?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -51,6 +56,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onZoomChange,
   onOpenInvoiceNoModal,
   currentInvoiceNo,
+  activePage = 'INVOICE',
+  onToggleQuotationPage,
 }) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [invoiceSaveSuccess, setInvoiceSaveSuccess] = useState(false);
@@ -80,11 +87,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
-                ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน
+                {activePage === 'QUOTATION'
+                  ? 'ระบบออกใบเสนอราคา'
+                  : 'ระบบออกใบกำกับภาษี / ใบเสร็จรับเงิน'}
               </h1>
               <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800 flex items-center gap-1">
                 <Layers className="w-3.5 h-3.5 text-orange-600" />
-                <span>พิมพ์ 2 หน้า</span>
+                <span>{activePage === 'QUOTATION' ? 'ใบเสนอราคา (1 หน้า)' : 'พิมพ์ 2 หน้า'}</span>
               </span>
 
               {/* Offline / Online Status Badge */}
@@ -106,7 +115,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">TAX INVOICE / RECEIPT GENERATOR (A4 PRINT READY)</p>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              {activePage === 'QUOTATION'
+                ? 'QUOTATION GENERATOR (A4 PRINT READY)'
+                : 'TAX INVOICE / RECEIPT GENERATOR (A4 PRINT READY)'}
+            </p>
           </div>
         </div>
 
@@ -188,32 +201,64 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          {/* Save Completed Invoice Button */}
-          <button
-            type="button"
-            onClick={handleSaveInvoiceClick}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-semibold transition-all shadow-2xs cursor-pointer ${
-              invoiceSaveSuccess
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                : isInvoiceSaved
-                ? 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700'
-                : 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100 hover:border-amber-400'
-            }`}
-            title="บันทึกใบกำกับภาษีใบนี้เก็บไว้ในเครื่องเป็นหลักฐาน"
-          >
-            {invoiceSaveSuccess ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>บันทึกสำเร็จ</span>
-              </>
-            ) : (
-              <>
-                <BookmarkCheck className="w-4 h-4 text-orange-600" />
-                <span>{isInvoiceSaved ? 'บันทึกอีกครั้ง' : 'บันทึกเอกสาร'}</span>
-              </>
-            )}
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Separate Quotation Page Toggle Button */}
+          {onToggleQuotationPage && (
+            <button
+              type="button"
+              onClick={onToggleQuotationPage}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-semibold transition-all shadow-2xs cursor-pointer ${
+                activePage === 'QUOTATION'
+                  ? 'bg-slate-800 border-slate-800 text-white hover:bg-slate-900'
+                  : 'bg-sky-50 border-sky-300 text-sky-800 hover:bg-sky-100 hover:border-sky-400'
+              }`}
+              title={
+                activePage === 'QUOTATION'
+                  ? 'กลับไปยังหน้าใบกำกับภาษี / ใบเสร็จรับเงิน'
+                  : 'เปิดหน้าใบเสนอราคา (แยกต่างหาก)'
+              }
+            >
+              {activePage === 'QUOTATION' ? (
+                <>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>กลับหน้าใบกำกับภาษี</span>
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="w-4 h-4 text-sky-600" />
+                  <span>ใบเสนอราคา</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Save Completed Invoice Button (Invoice View) */}
+          {activePage === 'INVOICE' && (
+            <button
+              type="button"
+              onClick={handleSaveInvoiceClick}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs sm:text-sm font-semibold transition-all shadow-2xs cursor-pointer ${
+                invoiceSaveSuccess
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                  : isInvoiceSaved
+                  ? 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700'
+                  : 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100 hover:border-amber-400'
+              }`}
+              title="บันทึกใบกำกับภาษีใบนี้เก็บไว้ในเครื่องเป็นหลักฐาน"
+            >
+              {invoiceSaveSuccess ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>บันทึกสำเร็จ</span>
+                </>
+              ) : (
+                <>
+                  <BookmarkCheck className="w-4 h-4 text-orange-600" />
+                  <span>{isInvoiceSaved ? 'บันทึกอีกครั้ง' : 'บันทึกเอกสาร'}</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Save Issuer Defaults */}
           <button

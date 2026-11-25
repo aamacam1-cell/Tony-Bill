@@ -79,6 +79,8 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [editingPriceIdx, setEditingPriceIdx] = useState<number | null>(null);
   const [editingPriceVal, setEditingPriceVal] = useState<string>('');
+  const [editingDiscount, setEditingDiscount] = useState(false);
+  const [editingDiscountVal, setEditingDiscountVal] = useState<string>('');
 
   // Determine selected customer ID for controlled select dropdown
   const selectedCustomerId = useMemo(() => {
@@ -114,6 +116,13 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
     } else {
       onMetaChange({ ...meta, [field]: val });
     }
+  };
+
+  // Helper to update discount (ส่วนลดราคา)
+  const updateDiscount = (rawVal: string) => {
+    const cleaned = rawVal.replace(/,/g, '').trim();
+    const num = cleaned === '' ? 0 : Math.max(0, parseFloat(cleaned) || 0);
+    onMetaChange({ ...meta, discount: num });
   };
 
   // Add new item row (เริ่มแถวใหม่เป็นค่าว่าง ไม่มี 0.00)
@@ -816,6 +825,47 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                   <span className="font-semibold">รวมเป็นเงิน (SUBTOTAL):</span>
                   <span className="font-mono font-semibold">{fmt(calcResult.subtotal)}</span>
                 </div>
+                <div
+                  className={`justify-between items-center text-slate-700 ${
+                    calcResult.discountAmount > 0 ? 'flex' : 'flex print:hidden'
+                  }`}
+                >
+                  <span className="font-semibold text-rose-700 print:text-black">ส่วนลด (DISCOUNT):</span>
+                  <div className="flex items-center gap-1 print:hidden">
+                    <span className="text-slate-400 font-mono">-</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        editingDiscount
+                          ? editingDiscountVal
+                          : !meta.discount || meta.discount === 0
+                          ? ''
+                          : fmt(meta.discount)
+                      }
+                      onFocus={() => {
+                        setEditingDiscount(true);
+                        setEditingDiscountVal(
+                          meta.discount && meta.discount > 0 ? String(meta.discount) : ''
+                        );
+                      }}
+                      onChange={(e) => {
+                        setEditingDiscountVal(e.target.value);
+                        updateDiscount(e.target.value);
+                      }}
+                      onBlur={() => {
+                        setEditingDiscount(false);
+                        setEditingDiscountVal('');
+                      }}
+                      placeholder="0.00"
+                      title="ระบุส่วนลดราคา (บาท)"
+                      className="w-28 text-right font-mono font-semibold text-rose-700 bg-white border border-slate-300 focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-xs sm:text-sm"
+                    />
+                  </div>
+                  <span className="hidden print:inline font-mono font-semibold text-black">
+                    -{fmt(calcResult.discountAmount)}
+                  </span>
+                </div>
                 <div className="flex justify-between items-center text-slate-500 text-xs sm:text-sm">
                   <span>ภาษีมูลค่าเพิ่ม (VAT 0%):</span>
                   <span className="font-mono font-semibold">0.00</span>
@@ -836,6 +886,53 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                   <span className="font-semibold">รวมเป็นเงิน (SUBTOTAL):</span>
                   <span className="font-mono font-semibold">{fmt(calcResult.subtotal)}</span>
                 </div>
+                <div
+                  className={`justify-between items-center text-slate-700 ${
+                    calcResult.discountAmount > 0 ? 'flex' : 'flex print:hidden'
+                  }`}
+                >
+                  <span className="font-semibold text-rose-700 print:text-black">ส่วนลด (DISCOUNT):</span>
+                  <div className="flex items-center gap-1 print:hidden">
+                    <span className="text-slate-400 font-mono">-</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        editingDiscount
+                          ? editingDiscountVal
+                          : !meta.discount || meta.discount === 0
+                          ? ''
+                          : fmt(meta.discount)
+                      }
+                      onFocus={() => {
+                        setEditingDiscount(true);
+                        setEditingDiscountVal(
+                          meta.discount && meta.discount > 0 ? String(meta.discount) : ''
+                        );
+                      }}
+                      onChange={(e) => {
+                        setEditingDiscountVal(e.target.value);
+                        updateDiscount(e.target.value);
+                      }}
+                      onBlur={() => {
+                        setEditingDiscount(false);
+                        setEditingDiscountVal('');
+                      }}
+                      placeholder="0.00"
+                      title="ระบุส่วนลดราคา (บาท)"
+                      className="w-28 text-right font-mono font-semibold text-rose-700 bg-white border border-slate-300 focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-xs sm:text-sm"
+                    />
+                  </div>
+                  <span className="hidden print:inline font-mono font-semibold text-black">
+                    -{fmt(calcResult.discountAmount)}
+                  </span>
+                </div>
+                {calcResult.discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-slate-700 text-xs sm:text-sm">
+                    <span className="font-semibold">ยอดหลังหักส่วนลด:</span>
+                    <span className="font-mono font-semibold">{fmt(calcResult.afterDiscountSubtotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-orange-700 print:text-black font-medium">
                   <span className="font-semibold">ภาษีมูลค่าเพิ่ม (VAT 7%):</span>
                   <span className="font-mono font-bold">+{fmt(calcResult.vatAmount)}</span>
@@ -856,6 +953,53 @@ export const InvoicePaper: React.FC<InvoicePaperProps> = ({
                   <span className="font-semibold">ราคารวมภาษีแล้ว:</span>
                   <span className="font-mono font-semibold">{fmt(calcResult.subtotal)}</span>
                 </div>
+                <div
+                  className={`justify-between items-center text-slate-700 ${
+                    calcResult.discountAmount > 0 ? 'flex' : 'flex print:hidden'
+                  }`}
+                >
+                  <span className="font-semibold text-rose-700 print:text-black">ส่วนลด (DISCOUNT):</span>
+                  <div className="flex items-center gap-1 print:hidden">
+                    <span className="text-slate-400 font-mono">-</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        editingDiscount
+                          ? editingDiscountVal
+                          : !meta.discount || meta.discount === 0
+                          ? ''
+                          : fmt(meta.discount)
+                      }
+                      onFocus={() => {
+                        setEditingDiscount(true);
+                        setEditingDiscountVal(
+                          meta.discount && meta.discount > 0 ? String(meta.discount) : ''
+                        );
+                      }}
+                      onChange={(e) => {
+                        setEditingDiscountVal(e.target.value);
+                        updateDiscount(e.target.value);
+                      }}
+                      onBlur={() => {
+                        setEditingDiscount(false);
+                        setEditingDiscountVal('');
+                      }}
+                      placeholder="0.00"
+                      title="ระบุส่วนลดราคา (บาท)"
+                      className="w-28 text-right font-mono font-semibold text-rose-700 bg-white border border-slate-300 focus:border-orange-400 focus:outline-none px-1.5 py-0.5 rounded text-xs sm:text-sm"
+                    />
+                  </div>
+                  <span className="hidden print:inline font-mono font-semibold text-black">
+                    -{fmt(calcResult.discountAmount)}
+                  </span>
+                </div>
+                {calcResult.discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-slate-700 text-xs sm:text-sm">
+                    <span className="font-semibold">หลังหักส่วนลด (รวมภาษี):</span>
+                    <span className="font-mono font-semibold">{fmt(calcResult.afterDiscountSubtotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-slate-600 text-xs sm:text-sm">
                   <span>ราคาก่อนภาษี (PRE-TAX):</span>
                   <span className="font-mono font-semibold">{fmt(calcResult.preTaxSubtotal)}</span>

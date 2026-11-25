@@ -43,6 +43,8 @@ export interface CustomerInfo {
   deliveryDate: string; // YYYY-MM-DD
 }
 
+export type AppPageView = 'INVOICE' | 'QUOTATION';
+
 export interface InvoiceMeta {
   docType: DocType;
   invoiceNo: string;
@@ -53,10 +55,34 @@ export interface InvoiceMeta {
   receiverDate: string;
   cashierName: string;
   cashierDate: string;
+  discount?: number; // ส่วนลดราคา (บาท)
+}
+
+export interface QuotationMeta {
+  quotationNo: string;
+  docDate: string; // YYYY-MM-DD
+  validityDays: string; // ยืนยันราคาภายใน เช่น "30 วัน"
+  contactPerson: string; // ผู้ติดต่อ
+  deliveryTerms: string; // กำหนดส่งมอบ / เงื่อนไขชำระเงิน
+  notes: string; // หมายเหตุ / เงื่อนไขเพิ่มเติม
+  discount?: number; // ส่วนลดราคา (บาท)
+  customerApproverName: string;
+  customerApproverDate: string;
+  quoterName: string;
+  quoterDate: string;
+}
+
+export interface QuotationDraft {
+  customer: CustomerInfo;
+  meta: QuotationMeta;
+  items: InvoiceItem[];
+  vatMode: VatMode;
 }
 
 export interface CalculationResult {
   subtotal: number;
+  discountAmount: number;
+  afterDiscountSubtotal: number;
   vatRate: number;
   vatAmount: number;
   netTotal: number;

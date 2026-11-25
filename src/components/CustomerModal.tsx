@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   X,
   Plus,
@@ -42,6 +42,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
   onSelectCustomer,
   activeCustomerId,
 }) => {
+  const modalBodyRef = useRef<HTMLDivElement | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -121,9 +122,16 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     setError(null);
   };
 
+  const scrollModalToTop = () => {
+    requestAnimationFrame(() => {
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
+
   const handleStartAdd = () => {
     resetForm();
     setIsAddingNew(true);
+    scrollModalToTop();
   };
 
   const handleStartEdit = (c: CustomerProfile) => {
@@ -138,6 +146,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     setBranch(c.branch || 'สำนักงานใหญ่');
     setVatType(c.vatType);
     setError(null);
+    scrollModalToTop();
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -181,10 +190,10 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4">
+      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <Building2 className="w-5 h-5 text-orange-400" />
             <h2 className="text-base sm:text-lg font-bold">ฐานข้อมูลลูกค้า (Customer Database)</h2>
@@ -202,7 +211,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 space-y-4">
+        <div ref={modalBodyRef} className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Top Actions: Search + Add New Button */}
           {!isAddingNew && !editingId && (
             <div className="flex flex-col sm:flex-row gap-2.5 justify-between items-center">
@@ -411,7 +420,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
           )}
 
           {/* Customer list table */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden max-h-[420px] overflow-y-auto">
+          <div className="border border-slate-200 rounded-xl overflow-x-auto max-h-[420px] overflow-y-auto">
             <table className="w-full text-xs sm:text-sm text-left">
               <thead className="bg-slate-100/90 text-slate-800 sticky top-0 font-bold border-b border-slate-200">
                 <tr>
@@ -646,7 +655,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-600">
+        <div className="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-slate-600 shrink-0">
           <div>
             💾 ข้อมูลถูกจัดเก็บอย่างปลอดภัยใน Local Storage ของบราวเซอร์ในเครื่องนี้
           </div>

@@ -1,7 +1,7 @@
 /**
  * Utility to reliably trigger print dialog across standalone windows and iframe sandboxes
  */
-export function executePrint() {
+export function executePrint(docTitle?: string) {
   try {
     // 1. If not sandboxed inside an iframe, direct window.print() is preferred
     const isInIframe = window.self !== window.top;
@@ -21,11 +21,11 @@ export function executePrint() {
   }
 
   // 3. Clone and open printable window
-  openStandalonePrintWindow();
+  openStandalonePrintWindow(docTitle);
   return true;
 }
 
-export function openStandalonePrintWindow() {
+export function openStandalonePrintWindow(docTitle?: string) {
   const printArea = document.getElementById('invoice-printable-area');
   if (!printArea) {
     window.print();
@@ -44,6 +44,7 @@ export function openStandalonePrintWindow() {
     .join('\n');
 
   const contentHtml = printArea.innerHTML;
+  const pageTitle = docTitle || 'พิมพ์ใบกำกับภาษี / ใบเสร็จรับเงิน (ต้นฉบับ + สำเนา)';
 
   printWindow.document.open();
   printWindow.document.write(`
@@ -51,7 +52,7 @@ export function openStandalonePrintWindow() {
     <html lang="th">
     <head>
       <meta charset="utf-8" />
-      <title>พิมพ์ใบกำกับภาษี / ใบเสร็จรับเงิน (ต้นฉบับ + สำเนา)</title>
+      <title>${pageTitle}</title>
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
